@@ -1,0 +1,56 @@
+# Entorno virtual
+venv/
+env/
+.env/
+.venv/
+
+# Archivos de Python compilados
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de datos (ignorar datos)
+*.db
+*.sqlite
+*.sqlite3
+
+# Pruebas (pytest)
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Archivos de configuración local
+*.local
+config_local.py
+secrets.py
+
+# IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+
+# Archivos empaquetados (PyInstaller)
+build/
+dist/
+*.spec
+*.exe.manifest
+warn-*.txt
+
+# Archivos de log
+*.log
+logs/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos temporales
+*.tmp
+*.temp
