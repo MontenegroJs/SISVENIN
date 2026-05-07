@@ -1,56 +1,206 @@
-# Entorno virtual
+# ============================================
+# SISVENIN - .gitignore
+# Proyecto: Sistema de Ventas e Inventario
+# ============================================
+
+# -------------------- Entorno virtual --------------------
 venv/
 env/
 .env/
 .venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Archivos de Python compilados
+# -------------------- Python compilados --------------------
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
 *.pyc
 *.pyo
 *.pyd
 
-# Base de datos (ignorar datos)
+# -------------------- Base de datos --------------------
+# Ignorar datos, pero mantener estructura si es necesario
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
 
-# Pruebas (pytest)
+# Excepción: si quieres mantener un esqueleto de BD
+!database/schema.sql
+!database/estructura_inicial.db
+
+# -------------------- Pruebas (pytest) --------------------
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
+.tox_distance/
+.tox_py/
+.tox_log/
+.coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+prof/
 
-# Archivos de configuración local
+# -------------------- Scripts temporales y logs --------------------
+*.log
+logs/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+
+# -------------------- Archivos de configuración local --------------------
 *.local
 config_local.py
 secrets.py
+.env.local
+.env.*.local
+config/development.py
+config/production.py
 
-# IDE y editores
+# -------------------- IDE y editores --------------------
+# VS Code
 .vscode/
+*.code-workspace
+.settings/
+
+# PyCharm
 .idea/
+*.iml
+.idea_modules/
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
 *~
-*.bak
-*.orig
+*.vim
 
-# Archivos empaquetados (PyInstaller)
+# Emacs
+*#
+.#*
+\#*#
+._*
+
+# -------------------- Empaquetado (PyInstaller) --------------------
 build/
 dist/
 *.spec
 *.exe.manifest
 warn-*.txt
+*.pyz
+*.pyzed
 
-# Archivos de log
-*.log
-logs/
-
-# Sistema operativo
-.DS_Store
+# -------------------- Sistema operativo --------------------
+# Windows
 Thumbs.db
-desktop.ini
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
 
-# Archivos temporales
-*.tmp
-*.temp
+# Linux
+.directory
+*.swp
+*.swo
+*~
+.directory
+*.pid
+*.seed
+*.pid.lock
+
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+*.Trashes
+*.icloud
+
+# -------------------- Archivos de proyecto específicos --------------------
+# Scripts generados
+nuevo_modulo.pyc
+*.bat.bak
+*.ps1.bak
+
+# Reportes generados por el sistema
+reportes_exportados/
+*.pdf
+*.xlsx
+*.xls
+
+# Backups de base de datos (si generas automáticamente)
+backups/
+*.backup.db
+
+# Archivos de configuración de base de datos local
+database/config.ini
+
+# -------------------- Herramientas de calidad de código --------------------
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+*.mypy_cache
+.ruff_cache/
+
+# -------------------- Archivos de distribución --------------------
+*.egg
+*.egg-info/
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+__pycache__/
+*.pyc
+
+# -------------------- Notebooks (si usas Jupyter) --------------------
+.ipynb_checkpoints/
+*.ipynb
+
+# -------------------- Archivos específicos de SISVENIN --------------------
+# No subir archivos temporales de tests
+tests/**/__pycache__/
+tests/**/.pytest_cache/
+
+# No subir la base de datos con datos reales
+database/sisvenin.db
+database/*.db-journal
+
+# Scripts de usuario personalizados (no versionados)
+*.user.bat
+*.user.ps1
