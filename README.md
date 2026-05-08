@@ -14,15 +14,58 @@ Lincoln Stip Soto Lira	        Desarrollador
 
 ## 📁 Estructura del proyecto
 SISVENIN/
-├── src/ # Código fuente
-│ ├── Models/ # Clases de datos (_modelo.py)
-│ ├── Views/ # Pantallas (_vista.py)
-│ ├── Controllers/ # Lógica de negocio (_controlador.py)
-│ └── main.py # Punto de entrada
-├── tests/ # Pruebas unitarias (test_*.py)
-├── database/ # Archivos de base de datos (.db)
-├── docs/ # Documentación del equipo
-├── requirements.txt # Dependencias del proyecto
+│
+├── 📁 database/ # Base de datos SQLite
+│ ├── .gitkeep
+│ └── sisvenin.db
+│
+├── 📁 src/ # Código fuente
+│ ├── 📁 app/ # Aplicación principal
+│ │ ├── 📁 layout/ # Layouts genéricos
+│ │ │ └── base_layout.py
+│ │ │
+│ │ ├── 📁 modules/ # Módulos de la aplicación
+│ │ │ │
+│ │ │ ├── 📁 producto/ # Módulo Producto
+│ │ │ │ ├── 📁 components/
+│ │ │ │ │ └── tabla_stock.py
+│ │ │ │ ├── producto_controlador.py
+│ │ │ │ ├── producto_modelo.py
+│ │ │ │ ├── producto_repositorio.py
+│ │ │ │ ├── producto_vista.py
+│ │ │ │ └── init.py
+│ │ │ │
+│ │ │ └── 📁 shared/ # Componentes compartidos
+│ │ │ ├── 📁 components/
+│ │ │ │ ├── boton_primario.py
+│ │ │ │ └── input_busqueda.py
+│ │ │ └── 📁 utils/
+│ │ │ ├── validadores.py
+│ │ │ └── init.py
+│ │ │
+│ │ └── app.py
+│ │
+│ ├── main.py
+│ └── init.py
+│
+├── 📁 tests/ # Pruebas unitarias
+│ ├── 📁 cliente/ # Tests del módulo Cliente
+│ │ ├── test_controlador.py
+│ │ ├── test_integracion.py
+│ │ ├── test_modelo.py
+│ │ ├── test_repositorio.py
+│ │ └── init.py
+│ ├── conftest.py
+│ └── pycache/
+│
+├── .gitignore
+├── newModu.bat # Script para crear módulos
+├── newModu.py
+├── README.md
+├── requirements.txt
+├── run.bat # Ejecutar la aplicación
+├── setup.bat # Configuración inicial
+└── test.bat # Ejecutar pruebas
 
 
 ## 🔧 Instalación paso a paso

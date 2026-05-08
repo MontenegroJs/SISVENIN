@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from PySide6.QtWidgets import QApplication, QMessageBox
 from src.app.app import App
-from src.app.modules.producto.producto_repository import ProductoRepository
+from src.app.modules.producto.producto_repositorio import ProductoRepositorio
 
 
 def main():
@@ -19,7 +19,7 @@ def main():
     try:
         # Inicializar base de datos
         print("🔄 Inicializando base de datos...")
-        ProductoRepository.inicializar()
+        ProductoRepositorio.inicializar()
         print("✅ Base de datos lista")
         
         # Crear aplicación Qt

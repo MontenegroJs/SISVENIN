@@ -1,28 +1,30 @@
-# nuevo_modulo.py
+# newModu.py
 """
 Script para crear automáticamente un nuevo módulo en SISVENIN
 
 Uso:
-    python nuevo_modulo.py <nombre_modulo>
+    python newModu.py <nombre_modulo>
 
 Ejemplo:
-    python nuevo_modulo.py cliente
-    python nuevo_modulo.py proveedor
+    python newModu.py cliente
+    python newModu.py proveedor
+    python newModu.py categoria
 
 Estructura creada:
     src/app/modules/<nombre_modulo>/
         ├── components/
         ├── <nombre_modulo>_vista.py
-        ├── <nombre_modulo>_controller.py
+        ├── <nombre_modulo>_controlador.py
         ├── <nombre_modulo>_modelo.py
-        ├── <nombre_modulo>_repository.py
+        ├── <nombre_modulo>_repositorio.py
         └── __init__.py
 
     tests/<nombre_modulo>/
         ├── test_modelo.py
-        ├── test_controller.py
-        ├── test_repository.py
-        └── test_integracion.py
+        ├── test_controlador.py
+        ├── test_repositorio.py
+        ├── test_integracion.py
+        └── __init__.py
 """
 
 import os
@@ -62,15 +64,15 @@ def get_contenido_init(modulo):
 Módulo {class_name}
 Exporta las clases principales
 """
-from .{modulo}_modelo import {class_name}
-from .{modulo}_controller import {class_name}Controller
-from .{modulo}_repository import {class_name}Repository
+from .{modulo}_modelo import {class_name}Modelo
+from .{modulo}_controlador import {class_name}Controlador
+from .{modulo}_repositorio import {class_name}Repositorio
 from .{modulo}_vista import {class_name}Vista
 
 __all__ = [
-    '{class_name}',
-    '{class_name}Controller',
-    '{class_name}Repository',
+    '{class_name}Modelo',
+    '{class_name}Controlador',
+    '{class_name}Repositorio',
     '{class_name}Vista',
 ]
 '''
@@ -82,7 +84,7 @@ def get_contenido_modelo(modulo):
     return f'''"""
 Modelo del módulo {class_name}
 """
-class {class_name}:
+class {class_name}Modelo:
     def __init__(self, id=None, nombre="", descripcion=""):
         self.id = id
         self.nombre = nombre
@@ -102,16 +104,16 @@ class {class_name}:
 '''
 
 
-def get_contenido_controller(modulo):
-    """Contenido para el archivo controller"""
+def get_contenido_controlador(modulo):
+    """Contenido para el archivo controlador"""
     class_name = modulo.capitalize()
     return f'''"""
 Controlador del módulo {class_name}
 """
-from .{modulo}_modelo import {class_name}
+from .{modulo}_modelo import {class_name}Modelo
 
 
-class {class_name}Controller:
+class {class_name}Controlador:
     
     @staticmethod
     def validar_nombre(nombre):
@@ -121,27 +123,27 @@ class {class_name}Controller:
 
     @staticmethod
     def listar_ejemplo():
-        """Retorna lista de ejemplo para pruebas"""
+        \"\"\"Retorna lista de ejemplo para pruebas\"\"\"
         return [
-            {class_name}(id=1, nombre=f"{class_name} 1", descripcion="Descripción 1"),
-            {class_name}(id=2, nombre=f"{class_name} 2", descripcion="Descripción 2"),
-            {class_name}(id=3, nombre=f"{class_name} 3", descripcion="Descripción 3"),
+            {class_name}Modelo(id=1, nombre=f"{class_name} 1", descripcion="Descripción 1"),
+            {class_name}Modelo(id=2, nombre=f"{class_name} 2", descripcion="Descripción 2"),
+            {class_name}Modelo(id=3, nombre=f"{class_name} 3", descripcion="Descripción 3"),
         ]
 '''
 
 
-def get_contenido_repository(modulo):
-    """Contenido para el archivo repository"""
+def get_contenido_repositorio(modulo):
+    """Contenido para el archivo repositorio"""
     class_name = modulo.capitalize()
     return f'''"""
-Repository del módulo {class_name} (Acceso a datos)
+Repositorio del módulo {class_name} (Acceso a datos)
 """
 import sqlite3
 import os
-from .{modulo}_modelo import {class_name}
+from .{modulo}_modelo import {class_name}Modelo
 
 
-class {class_name}Repository:
+class {class_name}Repositorio:
     # Ruta a la base de datos
     DB_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'database', 'sisvenin.db')
     DB_PATH = os.path.abspath(DB_PATH)
@@ -199,7 +201,7 @@ class {class_name}Repository:
         
         objetos = []
         for row in rows:
-            obj = {class_name}(id=row[0], nombre=row[1], descripcion=row[2])
+            obj = {class_name}Modelo(id=row[0], nombre=row[1], descripcion=row[2])
             obj.activo = bool(row[3])
             objetos.append(obj)
         return objetos
@@ -214,7 +216,7 @@ class {class_name}Repository:
         conn.close()
         
         if row:
-            obj = {class_name}(id=row[0], nombre=row[1], descripcion=row[2])
+            obj = {class_name}Modelo(id=row[0], nombre=row[1], descripcion=row[2])
             obj.activo = bool(row[3])
             return obj
         return None
@@ -251,7 +253,7 @@ Módulo {class_name} - Vista
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                                QPushButton, QLabel, QTableWidget,
                                QTableWidgetItem, QMessageBox, QHeaderView)
-from .{modulo}_controller import {class_name}Controller
+from .{modulo}_controlador import {class_name}Controlador
 
 
 class {class_name}Vista(QWidget):
@@ -291,7 +293,7 @@ class {class_name}Vista(QWidget):
     def refrescar(self):
         \"\"\"Carga los datos en la tabla\"\"\"
         try:
-            datos = {class_name}Controller.listar_ejemplo()
+            datos = {class_name}Controlador.listar_ejemplo()
             self.tabla.setRowCount(len(datos))
             for i, item in enumerate(datos):
                 self.tabla.setItem(i, 0, QTableWidgetItem(str(item.id)))
@@ -318,26 +320,26 @@ def get_contenido_test_modelo(modulo):
 Pruebas unitarias para el modelo {class_name}
 """
 import unittest
-from src.app.modules.{modulo}.{modulo}_modelo import {class_name}
+from src.app.modules.{modulo}.{modulo}_modelo import {class_name}Modelo
 
 
 class Test{class_name}Modelo(unittest.TestCase):
 
     def test_crear_{modulo}(self):
-        obj = {class_name}(id=1, nombre="Test", descripcion="Descripción")
+        obj = {class_name}Modelo(id=1, nombre="Test", descripcion="Descripción")
         self.assertEqual(obj.id, 1)
         self.assertEqual(obj.nombre, "Test")
         self.assertEqual(obj.descripcion, "Descripción")
 
     def test_to_dict(self):
-        obj = {class_name}(id=1, nombre="Test", descripcion="Desc")
+        obj = {class_name}Modelo(id=1, nombre="Test", descripcion="Desc")
         dic = obj.to_dict()
         self.assertEqual(dic["id"], 1)
         self.assertEqual(dic["nombre"], "Test")
         self.assertEqual(dic["descripcion"], "Desc")
 
     def test_str_representacion(self):
-        obj = {class_name}(id=1, nombre="Test")
+        obj = {class_name}Modelo(id=1, nombre="Test")
         self.assertIn("Test", str(obj))
 
 
@@ -346,32 +348,32 @@ if __name__ == "__main__":
 '''
 
 
-def get_contenido_test_controller(modulo):
-    """Contenido para test del controller"""
+def get_contenido_test_controlador(modulo):
+    """Contenido para test del controlador"""
     class_name = modulo.capitalize()
     return f'''"""
 Pruebas unitarias para el controlador de {class_name}
 """
 import unittest
-from src.app.modules.{modulo}.{modulo}_controller import {class_name}Controller
+from src.app.modules.{modulo}.{modulo}_controlador import {class_name}Controlador
 
 
-class Test{class_name}Controller(unittest.TestCase):
+class Test{class_name}Controlador(unittest.TestCase):
 
     def test_validar_nombre_correcto(self):
-        resultado = {class_name}Controller.validar_nombre("Válido")
+        resultado = {class_name}Controlador.validar_nombre("Válido")
         self.assertTrue(resultado)
 
     def test_validar_nombre_vacio(self):
         with self.assertRaises(ValueError):
-            {class_name}Controller.validar_nombre("")
+            {class_name}Controlador.validar_nombre("")
 
     def test_validar_nombre_espacios(self):
         with self.assertRaises(ValueError):
-            {class_name}Controller.validar_nombre("   ")
+            {class_name}Controlador.validar_nombre("   ")
 
     def test_listar_ejemplo(self):
-        lista = {class_name}Controller.listar_ejemplo()
+        lista = {class_name}Controlador.listar_ejemplo()
         self.assertGreater(len(lista), 0)
         self.assertTrue(hasattr(lista[0], 'id'))
         self.assertTrue(hasattr(lista[0], 'nombre'))
@@ -382,8 +384,8 @@ if __name__ == "__main__":
 '''
 
 
-def get_contenido_test_repository(modulo):
-    """Contenido para test del repository"""
+def get_contenido_test_repositorio(modulo):
+    """Contenido para test del repositorio"""
     class_name = modulo.capitalize()
     return f'''"""
 Pruebas para el repositorio de {class_name}
@@ -403,34 +405,34 @@ def temp_db_{modulo}():
         os.unlink(temp_path)
 
 
-def test_repository_con_temp_db(temp_db_{modulo}):
+def test_repositorio_con_temp_db(temp_db_{modulo}):
     \"\"\"Prueba básica del repositorio con BD temporal\"\"\"
-    from src.app.modules.{modulo}.{modulo}_repository import {class_name}Repository
-    from src.app.modules.{modulo}.{modulo}_modelo import {class_name}
+    from src.app.modules.{modulo}.{modulo}_repositorio import {class_name}Repositorio
+    from src.app.modules.{modulo}.{modulo}_modelo import {class_name}Modelo
     
     # Guardar ruta original
-    original_path = {class_name}Repository.DB_PATH
+    original_path = {class_name}Repositorio.DB_PATH
     
     try:
         # Usar BD temporal
-        {class_name}Repository.DB_PATH = temp_db_{modulo}
-        {class_name}Repository.crear_tabla()
+        {class_name}Repositorio.DB_PATH = temp_db_{modulo}
+        {class_name}Repositorio.crear_tabla()
         
         # Guardar
-        obj = {class_name}(nombre="Test Repository", descripcion="Probando")
-        {class_name}Repository.guardar(obj)
+        obj = {class_name}Modelo(nombre="Test Repositorio", descripcion="Probando")
+        {class_name}Repositorio.guardar(obj)
         
         assert obj.id is not None
         assert obj.id > 0
         
         # Recuperar
-        todos = {class_name}Repository.obtener_todos()
+        todos = {class_name}Repositorio.obtener_todos()
         assert len(todos) >= 1
-        assert todos[0].nombre == "Test Repository"
+        assert todos[0].nombre == "Test Repositorio"
         
     finally:
         # Restaurar ruta original
-        {class_name}Repository.DB_PATH = original_path
+        {class_name}Repositorio.DB_PATH = original_path
 '''
 
 
@@ -441,20 +443,28 @@ def get_contenido_test_integracion(modulo):
 Pruebas de integración para el módulo {class_name}
 """
 import pytest
-from src.app.modules.{modulo}.{modulo}_modelo import {class_name}
-from src.app.modules.{modulo}.{modulo}_controller import {class_name}Controller
+from src.app.modules.{modulo}.{modulo}_modelo import {class_name}Modelo
+from src.app.modules.{modulo}.{modulo}_controlador import {class_name}Controlador
 
 
 def test_crear_y_validar():
     \"\"\"Prueba integración entre modelo y controlador\"\"\"
-    nombre = "Producto Integración"
+    nombre = "{class_name} Integración"
     
     # Validar
-    assert {class_name}Controller.validar_nombre(nombre) is True
+    assert {class_name}Controlador.validar_nombre(nombre) is True
     
     # Crear
-    obj = {class_name}(nombre=nombre, descripcion="Test")
+    obj = {class_name}Modelo(nombre=nombre, descripcion="Test Integración")
     assert obj.nombre == nombre
+
+
+def test_listar_ejemplo_integracion():
+    \"\"\"Prueba que listar_ejemplo retorne datos\"\"\"
+    lista = {class_name}Controlador.listar_ejemplo()
+    assert len(lista) > 0
+    assert hasattr(lista[0], 'id')
+    assert hasattr(lista[0], 'nombre')
 '''
 
 
@@ -486,8 +496,8 @@ def crear_modulo(nombre_modulo):
         # 2. Crear archivos del módulo
         crear_archivo(base_path / "__init__.py", get_contenido_init(nombre))
         crear_archivo(base_path / f"{nombre}_modelo.py", get_contenido_modelo(nombre))
-        crear_archivo(base_path / f"{nombre}_controller.py", get_contenido_controller(nombre))
-        crear_archivo(base_path / f"{nombre}_repository.py", get_contenido_repository(nombre))
+        crear_archivo(base_path / f"{nombre}_controlador.py", get_contenido_controlador(nombre))
+        crear_archivo(base_path / f"{nombre}_repositorio.py", get_contenido_repositorio(nombre))
         crear_archivo(base_path / f"{nombre}_vista.py", get_contenido_vista(nombre))
         crear_archivo(base_path / "components" / "__init__.py", get_contenido_componentes_init())
         
@@ -496,11 +506,11 @@ def crear_modulo(nombre_modulo):
         
         # 4. Crear archivos de tests dentro de la carpeta del módulo
         crear_archivo(tests_path / "test_modelo.py", get_contenido_test_modelo(nombre))
-        crear_archivo(tests_path / "test_controller.py", get_contenido_test_controller(nombre))
-        crear_archivo(tests_path / "test_repository.py", get_contenido_test_repository(nombre))
+        crear_archivo(tests_path / "test_controlador.py", get_contenido_test_controlador(nombre))
+        crear_archivo(tests_path / "test_repositorio.py", get_contenido_test_repositorio(nombre))
         crear_archivo(tests_path / "test_integracion.py", get_contenido_test_integracion(nombre))
         
-        # 5. Crear __init__.py en la carpeta de tests (para que sea un paquete)
+        # 5. Crear __init__.py en la carpeta de tests
         init_contenido = f'''"""
 Tests para el módulo {nombre.capitalize()}
 """
@@ -532,7 +542,7 @@ Tests para el módulo {nombre.capitalize()}
 def main():
     parser = argparse.ArgumentParser(
         description="Crea un nuevo módulo en SISVENIN con su estructura de tests",
-        epilog="Ejemplo: python nuevo_modulo.py cliente"
+        epilog="Ejemplo: python newModu.py cliente"
     )
     parser.add_argument("nombre", help="Nombre del módulo (ej: cliente, proveedor, categoria)")
     args = parser.parse_args()

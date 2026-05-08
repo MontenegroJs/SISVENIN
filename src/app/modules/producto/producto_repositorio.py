@@ -1,12 +1,12 @@
 """
-Repository del módulo Cliente (Acceso a datos)
+Repositorio del módulo Producto (Acceso a datos)
 """
 import sqlite3
 import os
-from .cliente_modelo import Cliente
+from .producto_modelo import ProductoModelo
 
 
-class ClienteRepository:
+class ProductoRepositorio:
     # Ruta a la base de datos
     DB_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'database', 'sisvenin.db')
     DB_PATH = os.path.abspath(DB_PATH)
@@ -28,7 +28,7 @@ class ClienteRepository:
         conn = cls._get_connection()
         cursor = conn.cursor()
         cursor.execute(f"""
-            CREATE TABLE IF NOT EXISTS clientes (
+            CREATE TABLE IF NOT EXISTS productos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nombre TEXT NOT NULL,
                 descripcion TEXT,
@@ -37,7 +37,7 @@ class ClienteRepository:
         """)
         conn.commit()
         conn.close()
-        print(f"✓ Tabla 'clientes' creada/verificada")
+        print(f"✓ Tabla 'productos' creada/verificada")
 
     @classmethod
     def guardar(cls, obj):
@@ -45,7 +45,7 @@ class ClienteRepository:
         conn = cls._get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            f"INSERT INTO clientes (nombre, descripcion, activo) VALUES (?, ?, ?)",
+            f"INSERT INTO productos (nombre, descripcion, activo) VALUES (?, ?, ?)",
             (obj.nombre, obj.descripcion, 1 if obj.activo else 0)
         )
         conn.commit()
@@ -58,13 +58,13 @@ class ClienteRepository:
         """Obtiene todos los objetos"""
         conn = cls._get_connection()
         cursor = conn.cursor()
-        cursor.execute(f"SELECT id, nombre, descripcion, activo FROM clientes WHERE activo = 1")
+        cursor.execute(f"SELECT id, nombre, descripcion, activo FROM productos WHERE activo = 1")
         rows = cursor.fetchall()
         conn.close()
         
         objetos = []
         for row in rows:
-            obj = Cliente(id=row[0], nombre=row[1], descripcion=row[2])
+            obj = ProductoModelo(id=row[0], nombre=row[1], descripcion=row[2])
             obj.activo = bool(row[3])
             objetos.append(obj)
         return objetos
@@ -74,12 +74,12 @@ class ClienteRepository:
         """Obtiene un objeto por su ID"""
         conn = cls._get_connection()
         cursor = conn.cursor()
-        cursor.execute(f"SELECT id, nombre, descripcion, activo FROM clientes WHERE id = ?", (obj_id,))
+        cursor.execute(f"SELECT id, nombre, descripcion, activo FROM productos WHERE id = ?", (obj_id,))
         row = cursor.fetchone()
         conn.close()
         
         if row:
-            obj = Cliente(id=row[0], nombre=row[1], descripcion=row[2])
+            obj = ProductoModelo(id=row[0], nombre=row[1], descripcion=row[2])
             obj.activo = bool(row[3])
             return obj
         return None
@@ -90,7 +90,7 @@ class ClienteRepository:
         conn = cls._get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            f"UPDATE clientes SET nombre = ?, descripcion = ?, activo = ? WHERE id = ?",
+            f"UPDATE productos SET nombre = ?, descripcion = ?, activo = ? WHERE id = ?",
             (obj.nombre, obj.descripcion, 1 if obj.activo else 0, obj.id)
         )
         conn.commit()
@@ -101,6 +101,6 @@ class ClienteRepository:
         """Elimina un objeto (borrado lógico)"""
         conn = cls._get_connection()
         cursor = conn.cursor()
-        cursor.execute(f"UPDATE clientes SET activo = 0 WHERE id = ?", (obj_id,))
+        cursor.execute(f"UPDATE productos SET activo = 0 WHERE id = ?", (obj_id,))
         conn.commit()
         conn.close()

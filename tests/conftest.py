@@ -1,7 +1,7 @@
 # tests/conftest.py
 """
 Configuración global de pytest para SISVENIN
-Solo para el módulo Producto (por ahora)
+Fixtures y configuración compartida para todos los módulos
 """
 import sys
 import os
@@ -14,7 +14,36 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, 'src'))
 
 
-# ========== FIXTURES PARA PRODUCTO ==========
+# ========== CONFIGURACIÓN GENERAL ==========
+
+def pytest_configure(config):
+    """Configuración adicional de pytest"""
+    # Marcar pruebas que requieren base de datos
+    config.addinivalue_line(
+        "markers", "db: marca pruebas que necesitan base de datos real"
+    )
+    # Marcar pruebas lentas
+    config.addinivalue_line(
+        "markers", "slow: marca pruebas que son lentas"
+    )
+
+
+# ========== FIXTURES COMPARTIDOS ==========
+
+@pytest.fixture
+def temp_db_base():
+    """Crea una base de datos temporal para pruebas (usar en cada módulo)"""
+    fd, temp_path = tempfile.mkstemp(suffix='.db')
+    os.close(fd)
+    
+    yield temp_path
+    
+    # Limpiar al final
+    if os.path.exists(temp_path):
+        os.unlink(temp_path)
+
+
+# ========== FIXTURES PARA MÓDULO PRODUCTO ==========
 
 @pytest.fixture
 def producto_ejemplo():
@@ -41,39 +70,48 @@ def lista_productos():
     ]
 
 
-# ========== FIXTURES PARA BASE DE DATOS TEMPORAL ==========
+@pytest.fixture
+def repo_producto_temp(temp_db_base):
+    """
+    Retorna un ProductoRepositorio que usa una BD temporal
+    """
+    from src.app.modules.producto.producto_repositorio import ProductoRepositorio
+    
+    # Guardar ruta original
+    original_path = ProductoRepositorio.DB_PATH
+    
+    # Usar ruta temporal
+    ProductoRepositorio.DB_PATH = temp_db_base
+    
+    # Crear tabla
+    ProductoRepositorio.crear_tabla()
+    
+    yield ProductoRepositorio
+    
+    # Restaurar ruta original
+    ProductoRepositorio.DB_PATH = original_path
+
+
+# ========== FIXTURES GENÉRICOS (para módulos futuros) ==========
 
 @pytest.fixture
-def temp_db():
-    """Crea una base de datos temporal para pruebas del repositorio"""
+def temp_db_modular(request):
+    """
+    Fixture genérico para crear BD temporal para cualquier repositorio
+    
+    Uso:
+        def test_algo(temp_db_modular):
+            from src.app.modules.mimodulo.mimodulo_repositorio import MiModuloRepositorio
+            original = MiModuloRepositorio.DB_PATH
+            MiModuloRepositorio.DB_PATH = temp_db_modular
+            MiModuloRepositorio.crear_tabla()
+            yield MiModuloRepositorio
+            MiModuloRepositorio.DB_PATH = original
+    """
     fd, temp_path = tempfile.mkstemp(suffix='.db')
     os.close(fd)
     
     yield temp_path
     
-    # Limpiar al final
     if os.path.exists(temp_path):
         os.unlink(temp_path)
-
-
-@pytest.fixture
-def repo_con_temp_db(temp_db):
-    """
-    Retorna un ProductoRepository que usa una BD temporal
-    """
-    from src.app.modules.producto import producto_repository
-    from src.app.modules.producto.producto_repository import ProductoRepository
-    
-    # Guardar ruta original
-    original_path = ProductoRepository.DB_PATH
-    
-    # Usar ruta temporal
-    ProductoRepository.DB_PATH = temp_db
-    
-    # Crear tabla
-    ProductoRepository.crear_tabla()
-    
-    yield ProductoRepository
-    
-    # Restaurar ruta original
-    ProductoRepository.DB_PATH = original_path
