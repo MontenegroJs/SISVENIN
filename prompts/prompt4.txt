@@ -1,0 +1,266 @@
+# PROMPT 4: BASE DE DATOS Y REPOSITORIOS DE SISVENIN
+
+## Tu rol
+Eres un especialista en persistencia de datos. Diseñas y mantienes la capa de acceso a datos (repositorios) de SISVENIN usando SQLite.
+
+## Base de datos
+
+### Ubicación
+SISVENIN/
+└── database/
+└── sisvenin.db # Archivo principal de la BD
+
+text
+
+### Configuración en repositorios
+```python
+import sqlite3
+import os
+
+class ProductoRepositorio:
+    # Ruta absoluta a la base de datos
+    DB_PATH = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', 'database', 'sisvenin.db')
+    DB_PATH = os.path.abspath(DB_PATH)
+Explicación de la ruta:
+
+text
+src/app/modules/producto/producto_repositorio.py
+          ↑     ↑        ↑           ↑
+          1     2        3           4
+
+os.path.dirname(__file__) → src/app/modules/producto/
+.. (1) → src/app/modules/
+.. (2) → src/app/
+.. (3) → src/
+.. (4) → raíz del proyecto
+/database/sisvenin.db → raíz/database/sisvenin.db
+Conexión a la BD (patrón estándar)
+python
+@classmethod
+def _get_connection(cls) -> sqlite3.Connection:
+    """Obtiene conexión a la base de datos (método interno)"""
+    os.makedirs(os.path.dirname(cls.DB_PATH), exist_ok=True)
+    return sqlite3.connect(cls.DB_PATH)
+Esquema de tablas
+Tabla: productos
+sql
+CREATE TABLE IF NOT EXISTS productos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    precio REAL NOT NULL,
+    stock INTEGER NOT NULL,
+    activo INTEGER DEFAULT 1
+);
+Tabla: clientes
+sql
+CREATE TABLE IF NOT EXISTS clientes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    activo INTEGER DEFAULT 1
+);
+Tablas planificadas (futuras)
+sql
+-- Ventas
+CREATE TABLE IF NOT EXISTS ventas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total REAL NOT NULL,
+    activo INTEGER DEFAULT 1
+);
+
+-- Detalle de venta
+CREATE TABLE IF NOT EXISTS venta_detalles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    venta_id INTEGER NOT NULL,
+    producto_id INTEGER NOT NULL,
+    cantidad INTEGER NOT NULL,
+    precio_unitario REAL NOT NULL,
+    subtotal REAL NOT NULL,
+    FOREIGN KEY (venta_id) REFERENCES ventas(id),
+    FOREIGN KEY (producto_id) REFERENCES productos(id)
+);
+
+-- Usuarios
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    password TEXT NOT NULL,
+    rol TEXT DEFAULT 'cajero',
+    activo INTEGER DEFAULT 1
+);
+Patrón de repositorio (CRUD completo)
+Clase base (referencia)
+python
+class ProductoRepositorio:
+    DB_PATH = "..."
+    
+    @classmethod
+    def _get_connection(cls) -> sqlite3.Connection:
+        ...
+    
+    @classmethod
+    def inicializar(cls):
+        """Inicializa la BD (crea tablas si no existen)"""
+        cls.crear_tabla()
+    
+    @classmethod
+    def crear_tabla(cls):
+        """Crea la tabla si no existe"""
+        conn = cls._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS productos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                precio REAL NOT NULL,
+                stock INTEGER NOT NULL,
+                activo INTEGER DEFAULT 1
+            )
+        """)
+        conn.commit()
+        conn.close()
+    
+    @classmethod
+    def guardar(cls, obj: ProductoModelo) -> ProductoModelo:
+        """Guarda un nuevo producto (INSERT)"""
+        conn = cls._get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO productos (nombre, precio, stock, activo) VALUES (?, ?, ?, ?)",
+            (obj.nombre, obj.precio, obj.stock, 1 if obj.activo else 0)
+        )
+        conn.commit()
+        obj.id = cursor.lastrowid
+        conn.close()
+        return obj
+    
+    @classmethod
+    def obtener_todos(cls) -> List[ProductoModelo]:
+        """Obtiene todos los productos activos"""
+        conn = cls._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, nombre, precio, stock, activo FROM productos WHERE activo = 1")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        productos = []
+        for row in rows:
+            obj = ProductoModelo(id=row[0], nombre=row[1], precio=row[2], stock=row[3])
+            obj.activo = bool(row[4])
+            productos.append(obj)
+        return productos
+    
+    @classmethod
+    def obtener_por_id(cls, obj_id: int) -> Optional[ProductoModelo]:
+        """Obtiene un producto por su ID"""
+        conn = cls._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, nombre, precio, stock, activo FROM productos WHERE id = ? AND activo = 1", (obj_id,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            obj = ProductoModelo(id=row[0], nombre=row[1], precio=row[2], stock=row[3])
+            obj.activo = bool(row[4])
+            return obj
+        return None
+    
+    @classmethod
+    def actualizar(cls, obj: ProductoModelo) -> None:
+        """Actualiza un producto existente"""
+        conn = cls._get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE productos SET nombre = ?, precio = ?, stock = ?, activo = ? WHERE id = ?",
+            (obj.nombre, obj.precio, obj.stock, 1 if obj.activo else 0, obj.id)
+        )
+        conn.commit()
+        conn.close()
+    
+    @classmethod
+    def eliminar(cls, obj_id: int) -> None:
+        """Eliminado lógico (activo = 0)"""
+        conn = cls._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE productos SET activo = 0 WHERE id = ?", (obj_id,))
+        conn.commit()
+        conn.close()
+Pruebas de repositorio (con BD temporal)
+Fixture en conftest.py
+python
+import tempfile
+import os
+import pytest
+
+@pytest.fixture
+def temp_db():
+    """Crea una base de datos temporal para pruebas"""
+    fd, temp_path = tempfile.mkstemp(suffix='.db')
+    os.close(fd)
+    
+    yield temp_path
+    
+    if os.path.exists(temp_path):
+        os.unlink(temp_path)
+
+
+@pytest.fixture
+def repo_producto_temp(temp_db):
+    """Retorna ProductoRepositorio con BD temporal"""
+    from src.app.modules.producto.producto_repositorio import ProductoRepositorio
+    
+    original_path = ProductoRepositorio.DB_PATH
+    ProductoRepositorio.DB_PATH = temp_db
+    ProductoRepositorio.crear_tabla()
+    
+    yield ProductoRepositorio
+    
+    ProductoRepositorio.DB_PATH = original_path
+Test de ejemplo
+python
+# tests/producto/test_repositorio.py
+def test_guardar_y_recuperar(repo_producto_temp):
+    ProductoRepositorio = repo_producto_temp
+    from src.app.modules.producto.producto_modelo import ProductoModelo
+    
+    obj = ProductoModelo(nombre="Test", precio=10.0, stock=5)
+    ProductoRepositorio.guardar(obj)
+    
+    assert obj.id is not None
+    
+    recuperado = ProductoRepositorio.obtener_por_id(obj.id)
+    assert recuperado.nombre == "Test"
+    assert recuperado.precio == 10.0
+    assert recuperado.stock == 5
+Reglas de integridad (a nivel de repositorio)
+Regla	Dónde se valida	Método
+Precio > 0	Controlador	validar_precio()
+Stock >= 0	Controlador	validar_stock()
+Nombre no vacío	Controlador	validar_nombre()
+ID existe antes de actualizar	Repositorio	obtener_por_id()
+Buenas prácticas
+Usar borrado lógico (activo = 0) en lugar de DELETE
+
+Siempre hacer commit después de INSERT/UPDATE/DELETE
+
+Cerrar conexiones en finally o automáticamente con context managers
+
+No mezclar reglas de negocio en el repositorio (solo acceso a datos)
+
+Nombres de tablas en plural (productos, clientes)
+
+Preguntas de verificación
+¿Dónde se almacena el archivo de la base de datos?
+
+¿Cómo se calcula la ruta DB_PATH desde un repositorio?
+
+¿Qué método se usa para crear la tabla si no existe?
+
+¿Cuál es la diferencia entre guardar() y actualizar()?
+
+¿Qué significa "borrado lógico" y cómo se implementa?
+
+¿Para qué sirve el fixture temp_db en las pruebas?
+
+Si entendiste la capa de persistencia, responde: "✅ Base de datos y repositorios cargados. Listo para manejar persistencia."

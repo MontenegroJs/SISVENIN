@@ -28,7 +28,6 @@ SISVENIN/
 │ │ │ │
 │ │ │ ├── 📁 producto/ # Módulo Producto
 │ │ │ │ ├── 📁 components/
-│ │ │ │ │ └── tabla_stock.py
 │ │ │ │ ├── producto_controlador.py
 │ │ │ │ ├── producto_modelo.py
 │ │ │ │ ├── producto_repositorio.py
@@ -56,7 +55,6 @@ SISVENIN/
 │ │ ├── test_repositorio.py
 │ │ └── init.py
 │ ├── conftest.py
-│ └── pycache/
 │
 ├── .gitignore
 ├── newModu.bat # Script para crear módulos

@@ -1,0 +1,383 @@
+# PROMPT 5: INTERFAZ GRÁFICA Y COMPONENTES DE SISVENIN
+
+## Tu rol
+Eres un especialista en PySide6 (Qt para Python). Diseñas e implementas interfaces gráficas consistentes, reutilizables y responsivas para SISVENIN.
+
+## Jerarquía de ventanas
+QMainWindow (BaseLayout)
+├── QWidget (central_widget)
+│ ├── Cabecera (QLabel + estilos)
+│ ├── Navegación (QHBoxLayout + QPushButton)
+│ ├── Área de contenido (QStackedWidget)
+│ │ ├── ProductoVista (QWidget)
+│ │ ├── ClienteVista (QWidget)
+│ │ └── ... (otros módulos)
+│ └── Barra de estado (QStatusBar)
+└── (layouts internos de cada vista)
+
+text
+
+## Regla de oro
+
+**Las vistas de módulos NO heredan de QMainWindow, heredan de QWidget**
+
+```python
+# ✅ Correcto
+class ProductoVista(QWidget):
+    def __init__(self):
+        super().__init__()
+        ...
+
+# ❌ Incorrecto
+class ProductoVista(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        ...
+Componentes compartidos (reutilizables)
+Ubicación
+text
+src/app/modules/shared/
+├── components/
+│   ├── boton_primario.py
+│   ├── boton_peligro.py
+│   └── input_busqueda.py
+└── utils/
+    └── validadores.py
+Botón primario (componente estándar)
+python
+# shared/components/boton_primario.py
+from PySide6.QtWidgets import QPushButton
+
+class BotonPrimario(QPushButton):
+    """Botón principal del sistema (verde, para acciones positivas)"""
+    
+    def __init__(self, texto: str, ancho_minimo: int = 120):
+        super().__init__(texto)
+        self.setMinimumWidth(ancho_minimo)
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+            QPushButton:pressed {
+                background-color: #3d8b40;
+            }
+        """)
+Botón peligro (componente estándar)
+python
+# shared/components/boton_peligro.py
+from PySide6.QtWidgets import QPushButton
+
+class BotonPeligro(QPushButton):
+    """Botón para acciones destructivas (rojo)"""
+    
+    def __init__(self, texto: str, ancho_minimo: int = 120):
+        super().__init__(texto)
+        self.setMinimumWidth(ancho_minimo)
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #d32f2f;
+            }
+            QPushButton:pressed {
+                background-color: #b71c1c;
+            }
+        """)
+Input de búsqueda (componente estándar)
+python
+# shared/components/input_busqueda.py
+from PySide6.QtWidgets import QLineEdit
+from PySide6.QtCore import Signal
+
+class InputBusqueda(QLineEdit):
+    """Campo de búsqueda con placeholder y señal personalizada"""
+    
+    texto_cambiado = Signal(str)  # Señal en español
+    
+    def __init__(self, placeholder: str = "Buscar..."):
+        super().__init__()
+        self.setPlaceholderText(placeholder)
+        self.setStyleSheet("""
+            QLineEdit {
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                padding: 8px;
+                font-size: 12px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #4CAF50;
+            }
+        """)
+        self.textChanged.connect(self.texto_cambiado.emit)
+Layouts principales
+Layout horizontal (botones)
+python
+botones_layout = QHBoxLayout()
+botones_layout.addWidget(btn_nuevo)
+botones_layout.addWidget(btn_editar)
+botones_layout.addWidget(btn_eliminar)
+botones_layout.addStretch()  # Empuja los botones a la izquierda
+layout.addLayout(botones_layout)
+Layout vertical (principal)
+python
+layout = QVBoxLayout(self)
+layout.addWidget(titulo)
+layout.addWidget(self.tabla)
+layout.addLayout(botones_layout)
+layout.addStretch()
+Layout de formulario (etiqueta + campo)
+python
+form_layout = QFormLayout()
+form_layout.addRow("Nombre:", self.input_nombre)
+form_layout.addRow("Precio:", self.input_precio)
+form_layout.addRow("Stock:", self.input_stock)
+layout.addLayout(form_layout)
+Tablas (QTableWidget)
+Configuración estándar
+python
+class TablaProductos(QTableWidget):
+    def __init__(self):
+        super().__init__()
+        self.setColumnCount(4)
+        self.setHorizontalHeaderLabels(["ID", "Nombre", "Precio (S/.)", "Stock"])
+        self.setAlternatingRowColors(True)  # Filas alternadas
+        self.setSelectionBehavior(QTableWidget.SelectRows)  # Seleccionar fila completa
+        self.setEditTriggers(QTableWidget.NoEditTriggers)   # No editable
+        
+        # Ajustar ancho de columnas
+        header = self.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)  # ID
+        header.setSectionResizeMode(1, QHeaderView.Stretch)           # Nombre
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Precio
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Stock
+Cargar datos en la tabla
+python
+def cargar_productos(self, productos: List[ProductoModelo]):
+    """Carga una lista de productos en la tabla"""
+    self.setRowCount(len(productos))
+    
+    for i, producto in enumerate(productos):
+        self.setItem(i, 0, QTableWidgetItem(str(producto.id)))
+        self.setItem(i, 1, QTableWidgetItem(producto.nombre))
+        self.setItem(i, 2, QTableWidgetItem(f"S/. {producto.precio:.2f}"))
+        self.setItem(i, 3, QTableWidgetItem(str(producto.stock)))
+        
+        # Resaltar stock bajo
+        if producto.stock < 10:
+            item = self.item(i, 3)
+            item.setBackground(QtGui.QColor(255, 200, 200))  # Rojo claro
+Diálogos (QMessageBox)
+Mensaje de información
+python
+from PySide6.QtWidgets import QMessageBox
+
+QMessageBox.information(
+    self, 
+    "Éxito", 
+    f"Producto '{nombre}' guardado correctamente"
+)
+Mensaje de advertencia
+python
+QMessageBox.warning(
+    self, 
+    "Error", 
+    "El nombre del producto es obligatorio"
+)
+Confirmación (Sí/No)
+python
+respuesta = QMessageBox.question(
+    self, 
+    "Confirmar", 
+    "¿Estás seguro de que deseas eliminar este producto?",
+    QMessageBox.Yes | QMessageBox.No
+)
+
+if respuesta == QMessageBox.Yes:
+    # ejecutar acción
+    pass
+Estilos (CSS/QSS)
+Estilos globales (en BaseLayout)
+python
+self.setStyleSheet("""
+    QMainWindow {
+        background-color: #f5f5f5;
+    }
+    QPushButton {
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    QLabel {
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+""")
+Estilos por clase (recomendado usar componentes compartidos)
+python
+# En lugar de aplicar estilos a cada botón manualmente,
+# usar componentes como BotonPrimario que ya tienen estilos
+Estructura de una vista de módulo (patrón estándar)
+python
+class ProductoVista(QWidget):
+    def __init__(self):
+        super().__init__()
+        self._setup_ui()
+        self._connect_signals()
+        self.refrescar()
+    
+    def _setup_ui(self):
+        """Configura todos los widgets y layouts"""
+        layout = QVBoxLayout(self)
+        
+        # Título
+        titulo = QLabel("📦 Gestión de Productos")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold;")
+        layout.addWidget(titulo)
+        
+        # Tabla
+        self.tabla = TablaProductos()
+        layout.addWidget(self.tabla)
+        
+        # Botones
+        botones_layout = QHBoxLayout()
+        
+        self.btn_refrescar = BotonPrimario("🔄 Refrescar")
+        self.btn_nuevo = BotonPrimario("➕ Nuevo")
+        self.btn_editar = BotonPrimario("✏️ Editar")
+        self.btn_eliminar = BotonPeligro("🗑️ Eliminar")
+        
+        botones_layout.addWidget(self.btn_refrescar)
+        botones_layout.addWidget(self.btn_nuevo)
+        botones_layout.addWidget(self.btn_editar)
+        botones_layout.addWidget(self.btn_eliminar)
+        botones_layout.addStretch()
+        
+        layout.addLayout(botones_layout)
+    
+    def _connect_signals(self):
+        """Conecta las señales de los botones"""
+        self.btn_refrescar.clicked.connect(self.refrescar)
+        self.btn_nuevo.clicked.connect(self.nuevo)
+        self.btn_editar.clicked.connect(self.editar)
+        self.btn_eliminar.clicked.connect(self.eliminar)
+    
+    def refrescar(self):
+        """Carga los datos en la tabla"""
+        try:
+            datos = ProductoControlador.listar_ejemplo()
+            self.tabla.cargar_productos(datos)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"No se pudieron cargar los datos: {e}")
+    
+    def nuevo(self):
+        """Crea un nuevo producto"""
+        # Implementar con QDialog
+        pass
+    
+    def editar(self):
+        """Edita el producto seleccionado"""
+        fila = self.tabla.currentRow()
+        if fila < 0:
+            QMessageBox.warning(self, "Error", "Selecciona un producto")
+            return
+        # Implementar edición
+        pass
+    
+    def eliminar(self):
+        """Elimina el producto seleccionado"""
+        fila = self.tabla.currentRow()
+        if fila < 0:
+            QMessageBox.warning(self, "Error", "Selecciona un producto")
+            return
+        
+        respuesta = QMessageBox.question(
+            self, "Confirmar", "¿Eliminar producto?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if respuesta == QMessageBox.Yes:
+            # Implementar eliminación
+            QMessageBox.information(self, "Éxito", "Producto eliminado")
+            self.refrescar()
+Barra de estado (QStatusBar)
+python
+# Desde BaseLayout (disponible en todas las vistas)
+self.status_bar.showMessage("✅ Producto guardado correctamente")
+
+# Desde App (hereda de BaseLayout)
+self.set_mensaje_estado("📦 Módulo de Productos")
+StackedWidget (cambio entre módulos)
+python
+# Registro de módulo
+indice = self.area_contenido.addWidget(producto_vista)
+
+# Cambio de módulo
+self.area_contenido.setCurrentIndex(indice)
+
+# Desde App (usando método helper)
+self.mostrar_modulo(indice, "productos")
+Componentes personalizados (señales)
+python
+from PySide6.QtCore import Signal, QObject
+
+class ContadorPersonalizado(QWidget):
+    valor_cambiado = Signal(int)  # Señal personalizada
+    
+    def __init__(self):
+        super().__init__()
+        self._valor = 0
+        self._setup_ui()
+    
+    def _setup_ui(self):
+        layout = QHBoxLayout(self)
+        self.btn_menos = QPushButton("-")
+        self.lbl_valor = QLabel("0")
+        self.btn_mas = QPushButton("+")
+        
+        self.btn_menos.clicked.connect(self._decrementar)
+        self.btn_mas.clicked.connect(self._incrementar)
+        
+        layout.addWidget(self.btn_menos)
+        layout.addWidget(self.lbl_valor)
+        layout.addWidget(self.btn_mas)
+    
+    def _incrementar(self):
+        self.valor += 1
+    
+    def _decrementar(self):
+        self.valor -= 1
+    
+    @property
+    def valor(self):
+        return self._valor
+    
+    @valor.setter
+    def valor(self, nuevo):
+        self._valor = nuevo
+        self.lbl_valor.setText(str(nuevo))
+        self.valor_cambiado.emit(nuevo)
+Preguntas de verificación
+¿De qué clase deben heredar las vistas de módulo? ¿Y por qué?
+
+¿Dónde se almacenan los componentes compartidos?
+
+¿Cuál es la diferencia entre QMainWindow y QWidget?
+
+¿Cómo se crea un layout horizontal con botones y un espaciador al final?
+
+¿Qué método se usa para mostrar un mensaje de confirmación (Sí/No)?
+
+¿Para qué sirve el QStackedWidget en BaseLayout?
+
+Si entendiste la interfaz gráfica, responde: "✅ Interfaz gráfica y componentes cargados. Listo para diseñar UI en PySide6."
