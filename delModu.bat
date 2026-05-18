@@ -1,5 +1,5 @@
 @echo off
-title SISVENIN - Creador de Módulos
+title SISVENIN - Eliminador de Módulos
 cd /d "%~dp0"
 
 :: Activar entorno virtual
@@ -8,17 +8,16 @@ call venv\Scripts\activate
 :: Verificar si se pasó un argumento
 if "%1"=="" (
     echo ========================================
-    echo    SISVENIN - Creador de Módulos
+    echo    SISVENIN - Eliminador de Módulos
     echo ========================================
     echo.
-    echo Uso: newModu ^<nombre_modulo^>
+    echo Uso: delModu ^<nombre_modulo^>
     echo.
     echo Ejemplos:
-    echo   newModu cliente
-    echo   newModu proveedor
-    echo   newModu categoria
+    echo   delModu cliente
+    echo   delModu producto
     echo.
-    echo Para ver módulos existentes:
+    echo Para listar módulos:
     echo   delModu --list
     echo.
     pause
@@ -26,7 +25,7 @@ if "%1"=="" (
 )
 
 :: Ejecutar el script
-python newModu.py %1
+python delModu.py %1 %2
 
 :: Pausar para ver el resultado
 echo.

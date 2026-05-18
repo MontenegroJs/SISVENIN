@@ -10,11 +10,3 @@ class ProductoModelo:
 
     def __str__(self):
         return f"{self.nombre} (ID: {self.id})"
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "nombre": self.nombre,
-            "descripcion": self.descripcion,
-            "activo": self.activo,
-        }

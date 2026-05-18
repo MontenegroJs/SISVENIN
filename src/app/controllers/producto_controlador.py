@@ -1,7 +1,7 @@
 """
 Controlador del módulo Producto
 """
-from .producto_modelo import ProductoModelo
+from src.app.models.producto_modelo import ProductoModelo
 
 
 class ProductoControlador:
@@ -14,9 +14,7 @@ class ProductoControlador:
 
     @staticmethod
     def listar_ejemplo():
-        """Retorna lista de ejemplo para pruebas"""
         return [
             ProductoModelo(id=1, nombre=f"Producto 1", descripcion="Descripción 1"),
             ProductoModelo(id=2, nombre=f"Producto 2", descripcion="Descripción 2"),
-            ProductoModelo(id=3, nombre=f"Producto 3", descripcion="Descripción 3"),
         ]

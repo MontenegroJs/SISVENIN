@@ -20,48 +20,32 @@ SISVENIN/
 │ └── sisvenin.db
 │
 ├── 📁 src/ # Código fuente
-│ ├── 📁 app/ # Aplicación principal
-│ │ ├── 📁 layout/ # Layouts genéricos
-│ │ │ └── base_layout.py
-│ │ │
-│ │ ├── 📁 modules/ # Módulos de la aplicación
-│ │ │ │
-│ │ │ ├── 📁 producto/ # Módulo Producto
-│ │ │ │ ├── 📁 components/
-│ │ │ │ ├── producto_controlador.py
-│ │ │ │ ├── producto_modelo.py
-│ │ │ │ ├── producto_repositorio.py
-│ │ │ │ ├── producto_vista.py
-│ │ │ │ └── init.py
-│ │ │ │
-│ │ │ └── 📁 shared/ # Componentes compartidos
-│ │ │ ├── 📁 components/
-│ │ │ │ ├── boton_primario.py
-│ │ │ │ └── input_busqueda.py
-│ │ │ └── 📁 utils/
-│ │ │ ├── validadores.py
-│ │ │ └── init.py
-│ │ │
-│ │ └── app.py
+│ ├── main.py # Punto de entrada
 │ │
-│ ├── main.py
-│ └── init.py
+│ └── 📁 app/ # Aplicación principal
+│ ├── app.py # Ventana principal
+│ │
+│ ├── 📁 models/ # Capa MODELO (datos)
+│ │ └── producto_modelo.py
+│ │
+│ ├── 📁 controllers/ # Capa CONTROLADOR (lógica)
+│ │ └── producto_controlador.py
+│ │
+│ └── 📁 views/ # Capa VISTA (interfaz)
+│   └── producto_vista.py
 │
 ├── 📁 tests/ # Pruebas unitarias
-│ ├── 📁 cliente/ # Tests del módulo Cliente
-│ │ ├── test_controlador.py
-│ │ ├── test_integracion.py
-│ │ ├── test_modelo.py
-│ │ ├── test_repositorio.py
-│ │ └── init.py
-│ ├── conftest.py
+│ ├── conftest.py # Configuración de pytest
+│ └── test_producto.py
 │
 ├── .gitignore
-├── newModu.bat # Script para crear módulos
+├── newModu.bat # Crear nuevo módulo
 ├── newModu.py
+├── delModu.bat # Eliminar módulo
+├── delModu.py
 ├── README.md
 ├── requirements.txt
-├── run.bat # Ejecutar la aplicación
+├── run.bat # Ejecutar aplicación
 ├── setup.bat # Configuración inicial
 └── test.bat # Ejecutar pruebas
 
@@ -82,15 +66,17 @@ run
 Comando	                        ¿Qué hace?
 test                        	Ejecuta todas las pruebas
 run	                            Inicia el programa
-newModu nombre_del_modulo       Crear un nuevo módulo
+newModu <nombre>	            Crea un nuevo módulo (modelo, controlador, vista, tests)
+delModu --list	                Lista los módulos existentes
+delModu <nombre>	            Elimina un módulo completo
 
 
 ## 📝 Convenciones de nomenclatura
-Tipo de archivo	                Formato	                Ejemplo
-Modelo (datos)	                nombre_modelo.py	    producto_modelo.py
-Vista (pantalla)	            nombre_vista.py	        producto_vista.py
-Controlador (lógica)	        nombre_controlador.py	producto_controlador.py
-Repositorio (base de datos)     nombre_repositorio.py   producto_repositorio.py
+Tipo de archivo	        Formato	                    Ejemplo
+Modelo (datos)	        nombre_modelo.py	        producto_modelo.py
+Controlador (lógica)	nombre_controlador.py	    producto_controlador.py
+Vista (pantalla)	    nombre_vista.py	            producto_vista.py
+Pruebas	                test_nombre.py	            test_producto.py
 
 ## Indexar archivos y carpetas
 dir /s /b > indice.txt

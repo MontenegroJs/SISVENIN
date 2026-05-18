@@ -1,1 +1,0 @@
-# Componentes específicos del módulo
