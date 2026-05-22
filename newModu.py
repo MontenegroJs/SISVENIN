@@ -1,6 +1,6 @@
 # newModu.py
 """
-Script para crear un nuevo módulo en SISVENIN (sin __init__.py innecesarios)
+Script para crear un nuevo módulo en SISVENIN (MVC puro, sin __init__.py innecesarios)
 
 Uso:
     python newModu.py <nombre_modulo>
@@ -8,11 +8,13 @@ Uso:
 Ejemplo:
     python newModu.py cliente
 
-Estructura creada (sin __init__.py):
+Estructura creada:
     src/app/models/{nombre}_modelo.py
     src/app/controllers/{nombre}_controlador.py
     src/app/views/{nombre}_vista.py
-    tests/test_{nombre}.py
+    tests/{nombre}/
+        test_{nombre}_modelo.py
+        test_{nombre}_controlador.py
 """
 
 import argparse
@@ -49,23 +51,29 @@ def crear_modulo(nombre_modulo):
     
     base = Path(__file__).parent.absolute()
     
-    # Archivos a crear
+    # Archivos a crear (MVC puro)
     modelo = base / f"src/app/models/{nombre}_modelo.py"
     controlador = base / f"src/app/controllers/{nombre}_controlador.py"
     vista = base / f"src/app/views/{nombre}_vista.py"
-    test = base / f"tests/test_{nombre}.py"
     
-    # Verificar si ya existen
+    # Tests separados por capa, dentro de una carpeta con el nombre del módulo
+    test_modelo = base / f"tests/{nombre}/test_{nombre}_modelo.py"
+    test_controlador = base / f"tests/{nombre}/test_{nombre}_controlador.py"
+    
+    # Verificar si ya existe
     if modelo.exists():
         print(f"{YELLOW}⚠️ El módulo '{nombre}' ya existe{RESET}")
         return False
     
     print(f"\n{YELLOW}📦 Creando módulo '{nombre}'...{RESET}\n")
     
-    # Contenido del modelo
+    # ========== CONTENIDO DEL MODELO ==========
     modelo_contenido = f'''"""
 Modelo del módulo {nombre.capitalize()}
 """
+import sqlite3
+import os
+
 class {nombre.capitalize()}Modelo:
     def __init__(self, id=None, nombre="", descripcion=""):
         self.id = id
@@ -75,9 +83,20 @@ class {nombre.capitalize()}Modelo:
 
     def __str__(self):
         return f"{{self.nombre}} (ID: {{self.id}})"
+    
+    def guardar(self):
+        """Guarda el objeto en la base de datos (MVC puro - el modelo accede a BD)"""
+        # Aquí iría la lógica de inserción/actualización en SQLite
+        pass
+    
+    @staticmethod
+    def obtener_todos():
+        """Obtiene todos los registros de la base de datos"""
+        # Aquí iría la consulta SELECT
+        pass
 '''
     
-    # Contenido del controlador
+    # ========== CONTENIDO DEL CONTROLADOR ==========
     controlador_contenido = f'''"""
 Controlador del módulo {nombre.capitalize()}
 """
@@ -100,7 +119,7 @@ class {nombre.capitalize()}Controlador:
         ]
 '''
     
-    # Contenido de la vista
+    # ========== CONTENIDO DE LA VISTA ==========
     vista_contenido = f'''"""
 Módulo {nombre.capitalize()} - Vista
 """
@@ -114,7 +133,7 @@ class {nombre.capitalize()}Vista(QWidget):
         layout = QVBoxLayout(self)
         
         titulo = QLabel(f"📦 Gestión de {nombre.capitalize()}s")
-        titulo.setStyleSheet("font-size: 20px; font-weight: bold;")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: black;")
         layout.addWidget(titulo)
         
         self.btn = QPushButton("🔄 Refrescar")
@@ -129,44 +148,79 @@ class {nombre.capitalize()}Vista(QWidget):
         self.label.setText(f"Cargados {{len(datos)}} {nombre}s")
 '''
     
-    # Contenido del test
-    test_contenido = f'''"""
-Pruebas para el módulo {nombre.capitalize()}
+    # ========== TEST DEL MODELO ==========
+    test_modelo_contenido = f'''"""
+Pruebas unitarias para el modelo {nombre.capitalize()}
 """
 import unittest
 from src.app.models.{nombre}_modelo import {nombre.capitalize()}Modelo
-from src.app.controllers.{nombre}_controlador import {nombre.capitalize()}Controlador
 
 
 class Test{nombre.capitalize()}Modelo(unittest.TestCase):
-    def test_crear(self):
-        obj = {nombre.capitalize()}Modelo(id=1, nombre="Test")
+    
+    def test_crear_{nombre}(self):
+        obj = {nombre.capitalize()}Modelo(id=1, nombre="Test", descripcion="Descripción")
+        self.assertEqual(obj.id, 1)
         self.assertEqual(obj.nombre, "Test")
+        self.assertEqual(obj.descripcion, "Descripción")
+    
+    def test_guardar(self):
+        # Prueba de guardado en BD (usar BD temporal)
+        pass
 
 
 if __name__ == "__main__":
     unittest.main()
 '''
     
-    # Crear archivos (sin __init__.py)
+    # ========== TEST DEL CONTROLADOR ==========
+    test_controlador_contenido = f'''"""
+Pruebas unitarias para el controlador de {nombre.capitalize()}
+"""
+import unittest
+from src.app.controllers.{nombre}_controlador import {nombre.capitalize()}Controlador
+
+
+class Test{nombre.capitalize()}Controlador(unittest.TestCase):
+    
+    def test_validar_nombre_correcto(self):
+        resultado = {nombre.capitalize()}Controlador.validar_nombre("Válido")
+        self.assertTrue(resultado)
+    
+    def test_validar_nombre_vacio(self):
+        with self.assertRaises(ValueError):
+            {nombre.capitalize()}Controlador.validar_nombre("")
+    
+    def test_listar_ejemplo(self):
+        lista = {nombre.capitalize()}Controlador.listar_ejemplo()
+        self.assertGreater(len(lista), 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
+'''
+    
+    # Crear archivos
     crear_archivo(modelo, modelo_contenido)
     crear_archivo(controlador, controlador_contenido)
     crear_archivo(vista, vista_contenido)
-    crear_archivo(test, test_contenido)
+    crear_archivo(test_modelo, test_modelo_contenido)
+    crear_archivo(test_controlador, test_controlador_contenido)
     
     print(f"\n{GREEN}✅ Módulo '{nombre}' creado exitosamente!{RESET}")
-    print(f"\n📁 Archivos creados (sin __init__.py):")
+    print(f"\n📁 Archivos creados:")
     print(f"   src/app/models/{nombre}_modelo.py")
     print(f"   src/app/controllers/{nombre}_controlador.py")
     print(f"   src/app/views/{nombre}_vista.py")
-    print(f"   tests/test_{nombre}.py")
+    print(f"   tests/{nombre}/test_{nombre}_modelo.py")
+    print(f"   tests/{nombre}/test_{nombre}_controlador.py")
     
     return True
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Crea un nuevo módulo en SISVENIN (sin __init__.py innecesarios)",
+        description="Crea un nuevo módulo en SISVENIN (MVC puro)",
         epilog="Ejemplo: python newModu.py cliente"
     )
     parser.add_argument("nombre", help="Nombre del módulo (ej: cliente, proveedor)")

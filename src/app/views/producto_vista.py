@@ -11,7 +11,7 @@ class ProductoVista(QWidget):
         layout = QVBoxLayout(self)
         
         titulo = QLabel(f"📦 Gestión de Productos")
-        titulo.setStyleSheet("font-size: 20px; font-weight: bold;")
+        titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: black;")
         layout.addWidget(titulo)
         
         self.btn = QPushButton("🔄 Refrescar")

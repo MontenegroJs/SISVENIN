@@ -1,6 +1,6 @@
 # delModu.py
 """
-Script para eliminar un módulo completo de SISVENIN (sin __init__.py)
+Script para eliminar un módulo completo de SISVENIN
 
 Uso:
     python delModu.py <nombre_modulo>
@@ -10,11 +10,12 @@ Elimina:
     src/app/models/{nombre}_modelo.py
     src/app/controllers/{nombre}_controlador.py
     src/app/views/{nombre}_vista.py
-    tests/test_{nombre}.py
+    tests/{nombre}/ (carpeta completa con todos los tests)
 """
 
 import argparse
 import os
+import shutil
 from pathlib import Path
 
 # Colores
@@ -42,6 +43,15 @@ def eliminar_archivo(ruta):
     return False
 
 
+def eliminar_carpeta(ruta):
+    """Elimina una carpeta completa si existe"""
+    if ruta.exists() and ruta.is_dir():
+        shutil.rmtree(ruta)
+        print(f"{GREEN}✓{RESET} Eliminada carpeta: {ruta.name}/")
+        return True
+    return False
+
+
 def eliminar_modulo(nombre_modulo):
     nombre = nombre_modulo.lower().strip()
     
@@ -51,14 +61,16 @@ def eliminar_modulo(nombre_modulo):
     
     base = Path(__file__).parent.absolute()
     
-    # Rutas de los archivos
+    # Rutas de los archivos del módulo
     modelo = base / f"src/app/models/{nombre}_modelo.py"
     controlador = base / f"src/app/controllers/{nombre}_controlador.py"
     vista = base / f"src/app/views/{nombre}_vista.py"
-    test = base / f"tests/test_{nombre}.py"
     
-    # Verificar si existe al menos un archivo
-    if not any([modelo.exists(), controlador.exists(), vista.exists(), test.exists()]):
+    # Carpeta de tests del módulo
+    tests_dir = base / f"tests/{nombre}"
+    
+    # Verificar si existe al menos un archivo o la carpeta de tests
+    if not any([modelo.exists(), controlador.exists(), vista.exists(), tests_dir.exists()]):
         print(f"{YELLOW}⚠️ El módulo '{nombre}' no existe{RESET}")
         return False
     
@@ -69,7 +81,6 @@ def eliminar_modulo(nombre_modulo):
         ("Modelo", modelo),
         ("Controlador", controlador),
         ("Vista", vista),
-        ("Test", test),
     ]
     
     eliminados = []
@@ -77,11 +88,15 @@ def eliminar_modulo(nombre_modulo):
         if eliminar_archivo(ruta):
             eliminados.append(nombre_archivo)
     
+    # Eliminar carpeta de tests
+    if eliminar_carpeta(tests_dir):
+        eliminados.append("Carpeta de tests")
+    
     if eliminados:
         print(f"\n{GREEN}✅ Módulo '{nombre}' eliminado exitosamente!{RESET}")
-        print(f"\n📁 Archivos eliminados:")
-        for archivo in eliminados:
-            print(f"   - {archivo}")
+        print(f"\n📁 Elementos eliminados:")
+        for elemento in eliminados:
+            print(f"   - {elemento}")
     else:
         print(f"{YELLOW}⚠️ No se encontraron archivos del módulo '{nombre}'{RESET}")
     
@@ -89,18 +104,24 @@ def eliminar_modulo(nombre_modulo):
 
 
 def listar_modulos():
-    """Lista los módulos existentes"""
+    """Lista los módulos existentes (basado en modelos y carpetas de tests)"""
     base = Path(__file__).parent.absolute()
     models_dir = base / "src/app/models"
+    tests_dir = base / "tests"
     
-    if not models_dir.exists():
-        print(f"{YELLOW}⚠️ No hay módulos creados{RESET}")
-        return
+    modulos = set()
     
-    modulos = []
-    for archivo in models_dir.glob("*_modelo.py"):
-        nombre = archivo.stem.replace("_modelo", "")
-        modulos.append(nombre)
+    # Buscar por archivos de modelo
+    if models_dir.exists():
+        for archivo in models_dir.glob("*_modelo.py"):
+            nombre = archivo.stem.replace("_modelo", "")
+            modulos.add(nombre)
+    
+    # Buscar por carpetas de tests
+    if tests_dir.exists():
+        for carpeta in tests_dir.iterdir():
+            if carpeta.is_dir() and not carpeta.name.startswith("__"):
+                modulos.add(carpeta.name)
     
     if modulos:
         print(f"\n{BLUE}📦 Módulos existentes:{RESET}")
@@ -112,7 +133,7 @@ def listar_modulos():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Elimina un módulo completo de SISVENIN (sin __init__.py)",
+        description="Elimina un módulo completo de SISVENIN",
         epilog="Ejemplo: python delModu.py producto"
     )
     parser.add_argument("nombre", nargs="?", help="Nombre del módulo a eliminar")
@@ -131,7 +152,13 @@ def main():
     
     # Confirmar eliminación
     print(f"\n{YELLOW}⚠️ ATENCIÓN: Vas a eliminar el módulo '{args.nombre}'{RESET}")
-    confirmacion = input(f"¿Estás seguro? (s/N): ")
+    print(f"   Se eliminarán:")
+    print(f"   - src/app/models/{args.nombre}_modelo.py")
+    print(f"   - src/app/controllers/{args.nombre}_controlador.py")
+    print(f"   - src/app/views/{args.nombre}_vista.py")
+    print(f"   - tests/{args.nombre}/ (carpeta completa)")
+    
+    confirmacion = input(f"\n¿Estás seguro? (s/N): ")
     
     if confirmacion.lower() != 's':
         print(f"{GREEN}✅ Eliminación cancelada{RESET}")
