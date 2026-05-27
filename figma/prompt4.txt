@@ -1,0 +1,225 @@
+# Prompt para Figma - Pantalla: Gestión de Productos
+
+## Contexto
+Pantalla donde la dueña administra su inventario. Aquí podrá agregar, editar, eliminar y consultar productos.
+La funcionalidad MÁS IMPORTANTE es el **cálculo automático del precio de venta sugerido** a partir del precio de compra y el margen de ganancia.
+La dueña puede aceptar el precio sugerido o modificarlo manualmente.
+
+**Fórmula clave:** Precio Venta = Precio Compra × (1 + Margen/100)
+
+## HU relacionadas
+- HU-08: CRUD de productos con precio sugerido
+- HU-09: Búsqueda de productos (también aplica aquí)
+
+## Layout (área derecha - el menú lateral ya está en el master frame)
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 📦 Gestión de Productos Hoy: 26/05/2026 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ 🔍 Buscar producto... [ ➕ Nuevo Producto ] │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ LISTADO DE PRODUCTOS │ │
+│ │ ┌─────────────────────────────────────────────────────────────────────┐│ │
+│ │ │ Nombre │ Precio Venta │ Stock │ Compra │ Margen │ Acciones ││ │
+│ │ ├─────────────────────────────────────────────────────────────────────┤│ │
+│ │ │ Leche evaporada │ S/ 2.50 │ 5 │ S/1.92 │ 30% │ ✏️ 🗑️ ││ │
+│ │ │ Arroz 1kg │ S/ 3.50 │ 8 │ S/2.69 │ 30% │ ✏️ 🗑️ ││ │
+│ │ │ Galletas soda │ S/ 2.50 │ 4 │ S/1.92 │ 30% │ ✏️ 🗑️ ││ │
+│ │ │ Yogur fresa │ S/ 3.00 │ 2 🔴 │ S/2.30 │ 30% │ ✏️ 🗑️ ││ │
+│ │ │ Pan molde │ S/ 4.50 │ 3 │ S/3.46 │ 30% │ ✏️ 🗑️ ││ │
+│ │ └─────────────────────────────────────────────────────────────────────┘│ │
+│ │ │ │
+│ │ Mostrando 5 de 12 productos [ < 1 2 3 > ] │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+## Modal de Agregar/Editar Producto (aparece al hacer clic en "Nuevo Producto" o ✏️)
+┌─────────────────────────────────────────────────────────────────┐
+│ [ ✏️ Agregar Producto ] [ ✕ ] │
+├─────────────────────────────────────────────────────────────────┤
+│ │
+│ Nombre del producto * │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ Leche evaporada ││
+│ └─────────────────────────────────────────────────────────────┘│
+│ │
+│ ┌─────────────────────────┬─────────────────────────────────┐ │
+│ │ Precio de compra (S/) * │ Margen de ganancia (%) * │ │
+│ │ ┌───────────────────────┐│ ┌─────────────────────────────┐│ │
+│ │ │ 1.92 ││ │ 30 ││ │
+│ │ └───────────────────────┘│ └─────────────────────────────┘│ │
+│ └─────────────────────────┴─────────────────────────────────┘ │
+│ │
+│ Precio de venta sugerido: S/ 2.50 (calculado automáticamente) │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ ¿Desea modificar el precio? [ Aceptar sugerido ] [ Modificar ] │
+│ └─────────────────────────────────────────────────────────────┘│
+│ │
+│ ┌─────────────────────────┬─────────────────────────────────┐ │
+│ │ Stock disponible * │ Fecha de vencimiento (opcional) │ │
+│ │ ┌───────────────────────┐│ ┌─────────────────────────────┐│ │
+│ │ │ 5 ││ │ DD/MM/AAAA ││ │
+│ │ └───────────────────────┘│ └─────────────────────────────┘│ │
+│ └─────────────────────────┴─────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ ││
+│ │ [ GUARDAR PRODUCTO ] [ CANCELAR ] ││
+│ │ ││
+│ └─────────────────────────────────────────────────────────────┘│
+│ │
+└─────────────────────────────────────────────────────────────────┘
+
+## Modal de Confirmación de Eliminación
+┌─────────────────────────────────────────────────────────────────┐
+│ ⚠️ Confirmar eliminación [ ✕ ] │
+├─────────────────────────────────────────────────────────────────┤
+│ │
+│ ¿Está segura que desea eliminar el producto │
+│ "Leche evaporada"? │
+│ │
+│ Esta acción no se puede deshacer. │
+│ │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ ││
+│ │ [ ELIMINAR ] [ CANCELAR ] ││
+│ │ ││
+│ └─────────────────────────────────────────────────────────────┘│
+│ │
+└─────────────────────────────────────────────────────────────────┘
+
+## Elementos obligatorios
+
+### 1. Cabecera
+- **Título:** "📦 Gestión de Productos" (24px, negrita, #212121)
+- **Fecha actual:** formato "Hoy: DD/MM/AAAA" (14px, #757575, alineado a la derecha)
+- Margen inferior: 24px
+
+### 2. Barra de búsqueda y acciones
+- **Campo de búsqueda:**
+  - Placeholder: "🔍 Buscar producto por nombre..."
+  - Altura: 48px
+  - Ancho: 60% del espacio
+  - Búsqueda en tiempo real (mientras escribe, filtra la tabla)
+- **Botón "Nuevo Producto":**
+  - Estilo: Botón primario (verde)
+  - Texto: "➕ Nuevo Producto"
+  - Altura: 48px
+  - Al hacer clic: abre modal de Agregar Producto (vacío)
+
+### 3. Tabla de productos (elemento principal)
+- **Columnas (mínimo obligatorio):**
+  | Columna | Ancho sugerido | Formato |
+  |---------|---------------|---------|
+  | Nombre | 30% | Texto normal |
+  | Precio Venta | 15% | S/ XX.XX, verde si es sugerido? |
+  | Stock | 10% | Número + 🔴 si stock < 5 |
+  | Precio Compra | 15% | S/ XX.XX |
+  | Margen | 10% | XX% |
+  | Acciones | 10% | ✏️ 🗑️ |
+- **Comportamiento:**
+  - Filas clickeables (doble clic o clic en ✏️ abre edición)
+  - Hover sobre fila: fondo #FAFAFA
+  - Si stock < 5: mostrar 🔴 al lado del número (rojo)
+  - Si vencimiento próximo: mostrar ⚠️ o ícono en una columna extra (opcional)
+- **Paginación:**
+  - Mostrar "Mostrando X de Y productos"
+  - Botones: < 1 2 3 > (solo si hay más de 10 productos)
+
+### 4. Modal de Agregar/Editar Producto
+- **Título dinámico:** "✏️ Agregar Producto" o "✏️ Editar Producto"
+- **Campos obligatorios (*):**
+  - **Nombre del producto:** Input texto, obligatorio
+  - **Precio de compra:** Input número, > 0, obligatorio
+  - **Margen de ganancia:** Input número, entre 0 y 1000, obligatorio (default 30)
+  - **Stock disponible:** Input número, >= 0, obligatorio (default 0)
+- **Campo opcional:**
+  - **Fecha de vencimiento:** Date picker (DD/MM/AAAA), opcional
+- **Precio de venta sugerido (MÁGICO):**
+  - Se calcula automáticamente mientras se escribe precio_compra o margen
+  - Fórmula: `precio_venta = precio_compra * (1 + margen/100)`
+  - Mostrar como texto destacado: "Precio de venta sugerido: **S/ XX.XX**"
+  - Dos botones:
+    - [ Aceptar sugerido ]: usa el precio calculado
+    - [ Modificar ]: permite ingresar precio manual
+  - Si se hace clic en "Modificar": aparece un input adicional "Precio de venta final:" con el valor sugerido pre-cargado, editable
+- **Botones del modal:**
+  - [ GUARDAR PRODUCTO ] (primario, verde) - valida campos obligatorios
+  - [ CANCELAR ] (secundario) - cierra sin guardar
+
+### 5. Modal de Confirmación de Eliminación
+- **Título:** "⚠️ Confirmar eliminación"
+- **Mensaje:** "¿Está segura que desea eliminar el producto '[nombre]'? Esta acción no se puede deshacer."
+- **Botones:**
+  - [ ELIMINAR ] (peligro, rojo) - elimina y cierra
+  - [ CANCELAR ] (secundario) - cierra sin eliminar
+
+## Interacciones navegables (para el prototipo en Figma)
+
+| # | Acción | Destino |
+|---|--------|---------|
+| 1 | Escribir en campo búsqueda | Filtra la tabla en tiempo real (solo muestra productos que coinciden) |
+| 2 | Clic en "Nuevo Producto" | Abre modal de Agregar Producto (vacío) |
+| 3 | Clic en ✏️ (editar) en una fila | Abre modal de Editar Producto con los datos del producto |
+| 4 | Clic en 🗑️ (eliminar) en una fila | Abre modal de Confirmación de Eliminación |
+| 5 | En modal, cambiar precio_compra o margen | Actualiza automáticamente "Precio de venta sugerido" |
+| 6 | Clic en "Aceptar sugerido" | Usa el precio sugerido (no hace nada visible, solo lógica) |
+| 7 | Clic en "Modificar" | Muestra input adicional "Precio de venta final:" |
+| 8 | Clic en "Guardar Producto" | Cierra modal, actualiza tabla (simulado) |
+| 9 | Clic en "Eliminar" en modal confirmación | Cierra modal, elimina fila de la tabla (simulado) |
+| 10 | Clic en paginación (< 1 2 3 >) | Cambia página de la tabla (simulado) |
+
+## Estados del formulario (dentro del modal)
+
+### Estado 1: Agregar nuevo producto (vacío)
+- Todos los campos vacíos o con valores por defecto
+- Precio sugerido: S/ 0.00 (hasta que se ingresen datos)
+- Botón Guardar habilitado solo si campos obligatorios válidos
+
+### Estado 2: Editar producto existente
+- Todos los campos precargados con datos del producto
+- Precio sugerido mostrado según cálculo
+- Botón Guardar habilitado
+
+### Estado 3: Validación de errores
+- Mostrar mensaje de error debajo del campo problemático
+  - "El nombre es obligatorio"
+  - "El precio de compra debe ser mayor a 0"
+  - "El margen debe ser un número entre 0 y 1000"
+- Borde del campo en rojo (#D32F2F)
+
+### Estado 4: Modo "Modificar precio manual"
+- Aparece input adicional "Precio de venta final:"
+- El usuario puede escribir cualquier valor (no vinculado a fórmula)
+- Si se arrepiente, botón "Volver al sugerido" (opcional)
+
+## Datos de ejemplo (para el prototipo)
+
+```javascript
+// Lista de productos (para la tabla)
+productos = [
+  { id: 1, nombre: "Leche evaporada", precio_venta: 2.50, stock: 5, precio_compra: 1.92, margen: 30, vencimiento: null },
+  { id: 2, nombre: "Arroz 1kg", precio_venta: 3.50, stock: 8, precio_compra: 2.69, margen: 30, vencimiento: null },
+  { id: 3, nombre: "Galletas soda", precio_venta: 2.50, stock: 4, precio_compra: 1.92, margen: 30, vencimiento: "15/06/2026" },
+  { id: 4, nombre: "Yogur fresa", precio_venta: 3.00, stock: 2, precio_compra: 2.30, margen: 30, vencimiento: "28/05/2026" },
+  { id: 5, nombre: "Pan molde", precio_venta: 4.50, stock: 3, precio_compra: 3.46, margen: 30, vencimiento: "30/05/2026" },
+  { id: 6, nombre: "Aceite vegetal 1L", precio_venta: 8.00, stock: 10, precio_compra: 6.15, margen: 30, vencimiento: null },
+  { id: 7, nombre: "Fideo espagueti", precio_venta: 2.80, stock: 12, precio_compra: 2.15, margen: 30, vencimiento: null },
+  { id: 8, nombre: "Atún en agua", precio_venta: 4.50, stock: 6, precio_compra: 3.46, margen: 30, vencimiento: "20/12/2026" },
+  { id: 9, nombre: "Mayonesa 200g", precio_venta: 5.50, stock: 3, precio_compra: 4.23, margen: 30, vencimiento: null },
+  { id: 10, nombre: "Gaseosa 1.5L", precio_venta: 6.00, stock: 7, precio_compra: 4.61, margen: 30, vencimiento: null },
+  { id: 11, nombre: "Cerveza 620ml", precio_venta: 7.00, stock: 15, precio_compra: 5.38, margen: 30, vencimiento: null },
+  { id: 12, nombre: "Jabón líquido", precio_venta: 4.00, stock: 9, precio_compra: 3.07, margen: 30, vencimiento: null }
+]
+
+// Fórmula de cálculo
+function calcularPrecioSugerido(precioCompra, margen) {
+  return precioCompra * (1 + margen / 100)
+}
+
+// Ejemplo: 1.92 * (1 + 30/100) = 1.92 * 1.30 = 2.496 → redondeado a 2.50

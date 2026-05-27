@@ -1,0 +1,230 @@
+# Prompt para Figma - Pantalla: POS (Punto de Venta)
+
+## Contexto
+Es la pantalla MÁS IMPORTANTE del sistema. La dueña pasará el 80% de su tiempo aquí. 
+Debe permitir vender en MENOS DE 3 CLICS: buscar producto → agregar al carrito → confirmar venta.
+La interfaz debe ser TAN SIMPLE como WhatsApp: todo visible, sin pestañas ocultas, botones grandes.
+
+**Frase de la dueña:** "Que sea fácil de usar, muy amigable, como usar WhatsApp"
+
+## HU relacionadas
+- HU-01: Venta rápida en menos de 3 clics
+- HU-02: Calculadora de vuelto integrada
+- HU-05: Ticket de venta obligatorio
+- HU-09: Búsqueda de productos
+- HU-10: Cierre de caja simplificado
+
+## Layout (área derecha - el menú lateral ya está en el master frame)
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 🛒 Punto de Venta Hoy: 26/05/2026 14:30 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ │
+│ ┌─────────────────────────────────────────┬────────────────────────────┐ │
+│ │ 🔍 BÚSQUEDA │ 🛒 CARRITO DE COMPRAS │ │
+│ │ ┌─────────────────────────────────────┐ │ │ │
+│ │ │ 🔍 Buscar por nombre o código... │ │ ┌────────────────────────┐ │ │
+│ │ └─────────────────────────────────────┘ │ │ Producto Cant Precio│ │ │
+│ │ │ ├────────────────────────┤ │ │
+│ │ RESULTADOS (click para agregar) │ │ Leche evap. 2 S/5.00│ │ │
+│ │ ┌─────────────────────────────────────┐ │ │ Arroz 1kg 1 S/3.50│ │ │
+│ │ │ • Leche evaporada - S/2.50 (stock:5)│ │ │ Galletas 3 S/7.50│ │ │
+│ │ │ • Leche light - S/3.00 (stock:2) │ │ ├────────────────────────┤ │ │
+│ │ │ • Leche sin lactosa - S/4.00 (stock:0)│ │ │ TOTAL: S/16.00│ │ │
+│ │ └─────────────────────────────────────┘ │ └────────────────────────┘ │ │
+│ │ │ │ │
+│ │ ⚠️ Alertas rápidas (si hay) │ ┌────────────────────────┐ │ │
+│ │ ┌─────────────────────────────────────┐ │ │ 💰 PAGO CON: │ │ │
+│ │ │ 🔴 Stock bajo: Leche light (stock:2)│ │ │ ┌────────────────────┐ │ │ │
+│ │ └─────────────────────────────────────┘ │ │ │ S/ 20.00 │ │ │ │
+│ └─────────────────────────────────────────┴──┴─└────────────────────┘─┴───┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ │ │
+│ │ 💵 VUELTO: S/ 4.00 │ │
+│ │ │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ │ │
+│ │ [ ✅ CONFIRMAR VENTA ] [ 📋 CERRAR CAJA ] │ │
+│ │ │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+
+## Elementos obligatorios
+
+### 1. Cabecera
+- **Título:** "🛒 Punto de Venta" (24px, negrita, #212121)
+- **Fecha y hora actual:** formato "Hoy: DD/MM/YYYY HH:MM" (14px, #757575, alineado a la derecha)
+- Margen inferior: 24px
+
+### 2. Panel de Búsqueda (columna izquierda - 40% del ancho)
+- **Título sección:** "🔍 BÚSQUEDA" (18px, semibold, #212121)
+- **Campo de búsqueda:** 
+  - Placeholder: "Buscar por nombre o código..."
+  - Altura: 48px
+  - Ícono lupa a la izquierda dentro del input
+  - Mientras escribe, muestra resultados debajo (autocompletado visual)
+- **Resultados de búsqueda:**
+  - Título: "RESULTADOS (click para agregar)" (14px, #757575)
+  - Lista de productos (máximo 5-6 resultados)
+  - Cada resultado:
+    - "• [Nombre producto] - S/[precio] (stock: X)"
+    - Si stock = 0: texto tachado o gris, no agregable
+    - Hover: fondo #F5F5F5, cursor pointer
+    - Clic: agrega producto al carrito (con cantidad = 1 por defecto)
+  - Si no hay resultados: mostrar "No se encontraron productos"
+
+### 3. Alertas rápidas (dentro del panel de búsqueda, debajo de resultados)
+- **Solo visible si hay stock bajo (<5) o vencimiento próximo**
+- Fondo: #FFF8E1 (amarillo muy suave)
+- Borde izquierdo: 4px sólido #FFC107
+- Border radius: 8px
+- Padding: 8px 12px
+- Texto pequeño: "⚠️ [tipo de alerta]: [producto] (stock: X o vence: fecha)"
+- Clickeable: lleva a Gestión de Productos
+
+### 4. Panel de Carrito (columna derecha - 55% del ancho)
+- **Título sección:** "🛒 CARRITO DE COMPRAS" (18px, semibold, #212121)
+- **Tabla del carrito:**
+  - Columnas: Producto | Cantidad | Precio | Subtotal | Acción
+  - Cabecera: fondo #F5F5F5, texto #757575
+  - Cada fila:
+    - Producto: nombre del producto
+    - Cantidad: input numérico (mínimo 1, ancho 70px) o botones +/- 
+    - Precio: precio unitario (S/ XX.XX)
+    - Subtotal: cantidad × precio (S/ XX.XX)
+    - Acción: botón ícono 🗑️ (eliminar fila)
+  - Si el carrito está vacío: mostrar "🛒 El carrito está vacío. Busca productos para agregar." (centrado, gris, padding 40px)
+- **Total del carrito:**
+  - Separador línea #E0E0E0
+  - Texto "TOTAL:" (18px, semibold, #212121)
+  - Monto: "S/ [XX.XX]" (32px, negrita, #2E7D32)
+  - Alineado a la derecha
+
+### 5. Calculadora de vuelto (debajo del carrito - ANCHO COMPLETO)
+- Fondo: #F5F5F5
+- Border radius: 12px
+- Padding: 16px
+- Margen superior: 16px
+- **Campo "PAGO CON":**
+  - Etiqueta: "💰 PAGO CON:" (16px, semibold, #212121)
+  - Input numérico: ancho 200px, altura 48px, placeholder "0.00", alineación derecha
+  - Símbolo "S/" antes del input
+- **Vuelto (resultado):**
+  - Etiqueta: "💵 VUELTO:" (16px, semibold, #212121)
+  - Monto: "S/ [XX.XX]" (48px, negrita, #2E7D32)
+  - **Si PAGO CON < TOTAL:** mostrar mensaje en rojo "⚠️ Monto insuficiente" y el vuelto no se muestra o se muestra en rojo "S/ -XX.XX"
+  - **Si PAGO CON >= TOTAL:** vuelto en verde grande (#2E7D32)
+
+### 6. Botones de acción (fila inferior - ANCHO COMPLETO)
+- Contenedor: flex row, espacio entre elementos, margen superior 24px
+- **Botón CONFIRMAR VENTA (primario):**
+  - Estilo: Botón primario (verde, grande)
+  - Texto: "✅ CONFIRMAR VENTA"
+  - **Deshabilitado si:** carrito vacío O PAGO CON < TOTAL
+  - Al hacer clic: abre Modal de Ticket (ver más abajo)
+- **Botón CERRAR CAJA (secundario):**
+  - Estilo: Botón secundario (gris borde)
+  - Texto: "📋 CERRAR CAJA"
+  - Al hacer clic: navega a Reporte del día (Prompt 4) con los datos del día actual
+
+### 7. Modal de Ticket (aparece al hacer clic en "Confirmar Venta")
+- Overlay: fondo negro 50% transparente
+- Modal: blanco, border radius 16px, ancho 400px
+- **Contenido del ticket:**
+=================================
+MINIMARKET VILLA CARRION
+Centro poblado de Totoral
+San Jerónimo, Andahuaylas
+=================================
+TICKET DE VENTA
+Fecha: 26/05/2026 14:30:25
+=================================
+PRODUCTO CANT PRECIO
+
+Leche evaporada 2 S/ 5.00
+Arroz 1kg 1 S/ 3.50
+Galletas soda 3 S/ 7.50
+
+TOTAL: S/ 16.00
+PAGO CON: S/ 20.00
+VUELTO: S/ 4.00
+=================================
+¡Gracias por su compra!
+=================================
+- **Botones del modal:**
+- [ 🖨️ IMPRIMIR ] (primario) - cierra modal y muestra mensaje "Ticket impreso"
+- [ CERRAR ] (secundario) - solo cierra modal
+- **Validación:** No se puede cerrar el modal sin haber impreso o al menos haber visto el ticket (en prototipo se puede simular)
+
+## Interacciones navegables (para el prototipo en Figma)
+
+| # | Acción | Destino |
+|---|--------|---------|
+| 1 | Escribir en campo búsqueda | Filtra resultados en tiempo real (simulado) |
+| 2 | Clic en resultado de búsqueda | Agrega producto al carrito (cantidad=1) |
+| 3 | Cambiar cantidad en carrito | Actualiza subtotal y total automáticamente |
+| 4 | Clic en 🗑️ en carrito | Elimina esa fila del carrito |
+| 5 | Cambiar valor en "PAGO CON" | Actualiza vuelto en tiempo real (o mensaje error) |
+| 6 | Clic en "CONFIRMAR VENTA" | Abre modal de ticket (si carrito no vacío y pago válido) |
+| 7 | Clic en "IMPRIMIR" en modal | Cierra modal, muestra mensaje temporal "✅ Venta confirmada" |
+| 8 | Clic en "CERRAR CAJA" | Navega a Reporte del día (Prompt 4) |
+
+## Estados del POS
+
+### Estado 1: Carrito vacío
+- Tabla del carrito muestra mensaje vacío
+- Total: S/ 0.00
+- Botón Confirmar Venta: deshabilitado (gris)
+- Campo PAGO CON: puede estar vacío o deshabilitado
+
+### Estado 2: Carrito con productos, PAGO CON vacío
+- Total: S/ XX.XX
+- Botón Confirmar Venta: deshabilitado
+- Mensaje en vuelto: "Ingrese monto recibido"
+
+### Estado 3: Carrito con productos, PAGO CON < TOTAL
+- Total: S/ XX.XX
+- Campo PAGO CON: S/ YY.YY (menor)
+- Mensaje rojo: "⚠️ Monto insuficiente"
+- Botón Confirmar Venta: deshabilitado
+- Vuelto no se muestra o muestra negativo en rojo
+
+### Estado 4: Carrito con productos, PAGO CON >= TOTAL (FELIZ)
+- Total: S/ XX.XX
+- Campo PAGO CON: S/ YY.YY (mayor o igual)
+- Vuelto: S/ ZZ.ZZ (verde, grande, 48px)
+- Botón Confirmar Venta: habilitado (verde brillante)
+
+### Estado 5: Búsqueda con resultados
+- Muestra lista de productos debajo del campo
+
+### Estado 6: Búsqueda sin resultados
+- Muestra "No se encontraron productos"
+
+## Datos de ejemplo (para el prototipo)
+
+```javascript
+// Productos disponibles (para búsqueda)
+productos = [
+{ id: 1, nombre: "Leche evaporada", precio: 2.50, stock: 5 },
+{ id: 2, nombre: "Leche light", precio: 3.00, stock: 2 },
+{ id: 3, nombre: "Leche sin lactosa", precio: 4.00, stock: 0 },
+{ id: 4, nombre: "Arroz 1kg", precio: 3.50, stock: 8 },
+{ id: 5, nombre: "Galletas soda", precio: 2.50, stock: 4 },
+{ id: 6, nombre: "Yogur fresa", precio: 3.00, stock: 6 },
+{ id: 7, nombre: "Pan molde", precio: 4.50, stock: 3 }
+]
+
+// Carrito inicial (vacío para estado 1, o con productos para estado 4)
+carrito_ejemplo = [
+{ producto: "Leche evaporada", cantidad: 2, precio: 2.50, subtotal: 5.00 },
+{ producto: "Arroz 1kg", cantidad: 1, precio: 3.50, subtotal: 3.50 },
+{ producto: "Galletas soda", cantidad: 3, precio: 2.50, subtotal: 7.50 }
+]
+total_ejemplo = 16.00
+pago_con_ejemplo = 20.00
+vuelto_ejemplo = 4.00

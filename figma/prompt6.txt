@@ -1,0 +1,260 @@
+# Prompt para Figma - Pantalla: Prueba de Velocidad
+
+## Contexto
+Pantalla especial que permite a la dueña **medir y demostrar** que SISVENIN es más rápido que su método actual (cuaderno + calculadora).
+Es la **métrica de éxito clave del proyecto**: registrar 5 productos en menos de 30 segundos.
+
+**Objetivo del TO-BE:** "Reducir el tiempo de registro de una venta de 5 productos a menos de 30 segundos"
+
+**Frase motivacional al final:** "¡Eres XX% más rápida con SISVENIN!"
+
+## HU relacionadas
+- HU-07: Prueba de velocidad
+
+## Layout (área derecha - el menú lateral ya está en el master frame)
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ⏱️ Prueba de Velocidad Hoy: 26/05/2026 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ 🏆 COMPARA TU VELOCIDAD │ │
+│ │ │ │
+│ │ ¿Qué tan rápido eres registrando 5 productos? │ │
+│ │ SISVENIN te ayudará a ser MÁS RÁPIDA que con cuaderno y calculadora. │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────┬───────────────────────────────────────┐ │
+│ │ 📝 MÉTODO MANUAL │ 💻 SISVENIN │ │
+│ │ (Cuaderno + Calculadora) │ (Sistema) │ │
+│ │ │ │ │
+│ │ Tiempo registrado: │ Tiempo registrado: │ │
+│ │ ┌─────────────────────────────┐ │ ┌─────────────────────────────────┐ │ │
+│ │ │ ___ segundos │ │ │ ___ segundos │ │ │
+│ │ └─────────────────────────────┘ │ └─────────────────────────────────┘ │ │
+│ │ │ │ │
+│ │ [ ✏️ Ingresar tiempo manual ] │ [ ▶️ Iniciar prueba con SISVENIN ] │ │
+│ │ │ │ │
+│ └─────────────────────────────────┴───────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ │ │
+│ │ 📋 PRODUCTOS A REGISTRAR (selecciona 5) │ │
+│ │ │ │
+│ │ ┌─────────────────────────────────────────────────────────────────────┐│ │
+│ │ │ ☐ Leche evaporada ☐ Arroz 1kg ☐ Galletas soda ││ │
+│ │ │ ☐ Yogur fresa ☐ Pan molde ☐ Aceite 1L ││ │
+│ │ │ ☐ Fideo espagueti ☐ Atún en agua ☐ Mayonesa 200g ││ │
+│ │ │ ☐ Gaseosa 1.5L ☐ Cerveza 620ml ☐ Jabón líquido ││ │
+│ │ └─────────────────────────────────────────────────────────────────────┘│ │
+│ │ │ │
+│ │ Productos seleccionados: 0 de 5 │ │
+│ │ │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ │ │
+│ │ [ 🚀 CALCULAR RESULTADO ] │ │
+│ │ │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+## Modal de Resultado (aparece al hacer clic en "Calcular Resultado")
+┌─────────────────────────────────────────────────────────────────┐
+│ 🎉 RESULTADO DE LA PRUEBA DE VELOCIDAD [ ✕ ] │
+├─────────────────────────────────────────────────────────────────┤
+│ │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ ││
+│ │ 📊 COMPARACIÓN DIRECTA ││
+│ │ ││
+│ │ Método manual: ████████████████ 45 segundos ││
+│ │ SISVENIN: ████████ 18 segundos ││
+│ │ ││
+│ │ ││
+│ │ 🎉 ¡ERES 60% MÁS RÁPIDA CON SISVENIN! 🎉 ││
+│ │ ││
+│ │ ││
+│ │ ┌─────────────────────────────────────────────────────────┐││
+│ │ │ ✅ Cumples la meta: < 30 segundos │││
+│ │ │ 📈 Mejora respecto a método manual: 60% │││
+│ │ │ ⏱️ Tiempo ahorrado por prueba: 27 segundos │││
+│ │ └─────────────────────────────────────────────────────────┘││
+│ │ ││
+│ └─────────────────────────────────────────────────────────────┘│
+│ │
+│ ┌─────────────────────────────────────────────────────────────┐│
+│ │ ││
+│ │ [ 🔄 NUEVA PRUEBA ] [ CERRAR ] ││
+│ │ ││
+│ └─────────────────────────────────────────────────────────────┘│
+│ │
+└─────────────────────────────────────────────────────────────────┘
+
+## Elementos obligatorios
+
+### 1. Cabecera
+- **Título:** "⏱️ Prueba de Velocidad" (24px, negrita, #212121)
+- **Fecha actual:** formato "Hoy: DD/MM/AAAA" (14px, #757575, alineado a la derecha)
+- Margen inferior: 24px
+
+### 2. Tarjeta de explicación
+- Fondo: #E3F2FD (azul muy claro) o #F5F5F5
+- Border radius: 12px
+- Padding: 16px
+- Margen inferior: 24px
+- **Contenido:**
+  - Ícono: 🏆
+  - Título: "COMPARA TU VELOCIDAD"
+  - Texto: "¿Qué tan rápido eres registrando 5 productos? SISVENIN te ayudará a ser MÁS RÁPIDA que con cuaderno y calculadora."
+
+### 3. Panel de comparación (dos columnas)
+- Contenedor: grid 2 columnas, gap 24px
+- **Columna Izquierda: Método Manual**
+  - Fondo: #FFF3E0 (naranja muy claro) o blanco con borde naranja
+  - Border radius: 12px
+  - Sombra suave
+  - Padding: 20px
+  - Título: "📝 MÉTODO MANUAL (Cuaderno + Calculadora)"
+  - Campo de tiempo: 
+    - Etiqueta: "Tiempo registrado:"
+    - Input número: ancho 120px, placeholder "segundos", altura 48px
+    - Unidad: "segundos" al lado
+  - Botón: "✏️ Ingresar tiempo manual" (secundario, gris borde)
+    - Al hacer clic: permite escribir en el campo de tiempo
+- **Columna Derecha: SISVENIN**
+  - Fondo: #E8F5E9 (verde muy claro) o blanco con borde verde
+  - Border radius: 12px
+  - Sombra suave
+  - Padding: 20px
+  - Título: "💻 SISVENIN (Sistema)"
+  - Campo de tiempo: 
+    - Etiqueta: "Tiempo registrado:"
+    - Display: "___ segundos" (inicialmente vacío o "0")
+    - No editable directamente (lo llena el cronómetro)
+  - Botón: "▶️ Iniciar prueba con SISVENIN" (primario, verde)
+    - Al hacer clic: inicia el cronómetro y abre el modal/flujo de registro de 5 productos
+
+### 4. Selección de productos
+- **Título sección:** "📋 PRODUCTOS A REGISTRAR (selecciona 5)"
+- **Grid de productos:** 3 o 4 columnas, checkboxes
+- **Lista de productos disponibles** (mínimo 10 productos para elegir):
+  - Leche evaporada
+  - Arroz 1kg
+  - Galletas soda
+  - Yogur fresa
+  - Pan molde
+  - Aceite 1L
+  - Fideo espagueti
+  - Atún en agua
+  - Mayonesa 200g
+  - Gaseosa 1.5L
+  - Cerveza 620ml
+  - Jabón líquido
+- **Contador:** "Productos seleccionados: X de 5"
+- **Validación:** No se puede iniciar la prueba si no hay exactamente 5 productos seleccionados
+
+### 5. Botón Calcular Resultado
+- Botón grande, ancho completo o centrado
+- Estilo: Botón primario (verde) o especial (morado/azul para destacar)
+- Texto: "🚀 CALCULAR RESULTADO"
+- Altura: 56px
+- **Deshabilitado si:** falta tiempo manual O falta tiempo SISVENIN
+- Al hacer clic: abre Modal de Resultado
+
+### 6. Modal de Resultado
+- **Título:** "🎉 RESULTADO DE LA PRUEBA DE VELOCIDAD"
+- **Gráfico de barras comparativo (opcional pero recomendado):**
+  - Barra método manual: ancho proporcional al tiempo (ej: 45px → 80% de ancho)
+  - Barra SISVENIN: ancho proporcional (ej: 18px → 32% de ancho)
+  - Colores: manual = #FF9800 (naranja), SISVENIN = #2E7D32 (verde)
+- **Mensaje principal (grande, destacado):**
+  - "🎉 ¡ERES [XX]% MÁS RÁPIDA CON SISVENIN! 🎉"
+  - Tamaño: 28px o 32px, negrita, color #2E7D32
+- **Detalles (tarjeta resumen):**
+  - ✅ Cumples la meta: < 30 segundos (o ❌ No cumples la meta)
+  - 📈 Mejora respecto a método manual: XX%
+  - ⏱️ Tiempo ahorrado por prueba: XX segundos
+- **Botones:**
+  - [ 🔄 NUEVA PRUEBA ] (primario) - cierra modal y limpia los campos
+  - [ CERRAR ] (secundario) - solo cierra modal
+
+### 7. Flujo de prueba con SISVENIN (al hacer clic en "Iniciar prueba")
+- **Paso 1:** Aparece un pequeño modal o cambia el contenido de la pantalla
+- **Paso 2:** Se muestran los 5 productos seleccionados uno por uno (o los 5 en una lista)
+- **Paso 3:** La dueña debe registrar cada producto en el sistema (simulado en Figma)
+- **Paso 4:** Al terminar de registrar los 5 productos, se detiene el cronómetro
+- **Paso 5:** El tiempo se guarda automáticamente en el campo "Tiempo registrado" de SISVENIN
+
+**Nota para Figma:** Como es un prototipo navegable, se puede simular:
+- Al hacer clic en "Iniciar prueba", mostrar un mensaje: "⏱️ Cronómetro iniciado... (simulación)"
+- Luego un pequeño modal donde la dueña "registra" productos con clics
+- Al final, mostrar "✅ Prueba completada en XX segundos"
+
+## Interacciones navegables (para el prototipo en Figma)
+
+| # | Acción | Destino |
+|---|--------|---------|
+| 1 | Seleccionar checkbox de productos | Actualiza contador "Productos seleccionados: X de 5" |
+| 2 | Clic en "Ingresar tiempo manual" | Habilita el input de tiempo manual (permite escribir) |
+| 3 | Clic en "Iniciar prueba con SISVENIN" | Inicia flujo simulado (modal o cambio de estado) |
+| 4 | En el flujo de prueba, completar registro | Detiene cronómetro, muestra tiempo en campo SISVENIN |
+| 5 | Clic en "Calcular Resultado" | Abre Modal de Resultado con los cálculos |
+| 6 | Clic en "Nueva Prueba" en modal | Cierra modal, limpia tiempos y checkboxes |
+| 7 | Clic en "Cerrar" en modal | Solo cierra modal |
+
+## Estados de la pantalla
+
+### Estado 1: Configuración inicial
+- Tiempo manual: vacío
+- Tiempo SISVENIN: vacío
+- Productos seleccionados: 0 de 5
+- Botón Calcular: deshabilitado
+
+### Estado 2: Tiempo manual ingresado, productos seleccionados
+- Tiempo manual: 45 segundos
+- Tiempo SISVENIN: vacío
+- Productos seleccionados: 5 de 5
+- Botón Calcular: deshabilitado (falta tiempo SISVENIN)
+
+### Estado 3: Ambos tiempos listos (FELIZ)
+- Tiempo manual: 45 segundos
+- Tiempo SISVENIN: 18 segundos
+- Productos seleccionados: 5 de 5
+- Botón Calcular: habilitado (verde brillante)
+
+### Estado 4: Prueba en curso (simulado)
+- Botón "Iniciar prueba" cambia a "⏱️ Prueba en curso..."
+- Deshabilitado durante la simulación
+
+### Estado 5: Meta no cumplida
+- Si tiempo SISVENIN > 30 segundos
+- En modal: "❌ No cumples la meta (meta: <30 segundos)"
+- Mensaje de ánimo: "¡Sigue practicando!"
+
+## Datos de ejemplo (para el prototipo)
+
+```javascript
+// Ejemplo de tiempos
+tiempo_manual = 45  // segundos
+tiempo_sisvenin = 18  // segundos
+
+// Cálculos
+mejora_porcentaje = ((tiempo_manual - tiempo_sisvenin) / tiempo_manual) * 100
+// (45 - 18) / 45 * 100 = 60%
+
+meta_cumplida = tiempo_sisvenin < 30  // true
+
+tiempo_ahorrado = tiempo_manual - tiempo_sisvenin  // 27 segundos
+
+// Texto resultado
+if (mejora_porcentaje > 0) {
+  mensaje = `🎉 ¡ERES ${Math.round(mejora_porcentaje)}% MÁS RÁPIDA CON SISVENIN! 🎉`
+} else {
+  mensaje = "📊 Los tiempos son similares. ¡Sigue usando SISVENIN!"
+}
+
+// Color de barras
+// Manual: #FF9800 (naranja) - ancho: (tiempo_manual / max_tiempo) * 100%
+// SISVENIN: #2E7D32 (verde) - ancho: (tiempo_sisvenin / max_tiempo) * 100%
+// max_tiempo sugerido: 60 segundos (para que las barras tengan escala)

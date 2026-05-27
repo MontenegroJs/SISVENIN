@@ -1,0 +1,189 @@
+# Prompt para Figma - Pantalla: Reporte del Día
+
+## Contexto
+Pantalla donde la dueña puede ver un resumen completo de las ventas del día actual.
+Debe mostrar de forma CLARA los ingresos totales, la ganancia estimada y qué productos se vendieron.
+Todo esto sin necesidad de Excel ni cálculos manuales.
+
+**Frase clave del TO-BE:** "No requiere abrir Excel ni hacer cálculos manuales"
+
+## HU relacionadas
+- HU-06: Reporte del día (sin Excel)
+- HU-10: Cierre de caja simplificado (reutiliza este reporte)
+
+## Layout (área derecha - el menú lateral ya está en el master frame)
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 📄 Reporte del Día Hoy: 26/05/2026 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ 📊 RESUMEN DEL DÍA │ │
+│ │ │ │
+│ │ ┌─────────────────────────┐ ┌─────────────────────────┐ │ │
+│ │ │ 💰 TOTAL INGRESOS │ │ 📈 GANANCIA ESTIMADA │ │ │
+│ │ │ │ │ │ │ │
+│ │ │ S/ 247.50 │ │ S/ 89.75 │ │ │
+│ │ │ │ │ │ │ │
+│ │ │ Ventas realizadas: 3 │ │ Margen promedio: 36% │ │ │
+│ │ └─────────────────────────┘ └─────────────────────────┘ │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ 🛒 PRODUCTOS VENDIDOS HOY │ │
+│ │ │ │
+│ │ ┌─────────────────────────────────────────────────────────────────────┐│ │
+│ │ │ Producto │ Cantidad │ Precio Unit. │ Subtotal │ % Ventas ││ │
+│ │ ├─────────────────────────────────────────────────────────────────────┤│ │
+│ │ │ Leche evaporada │ 5 │ S/ 2.50 │ S/ 12.50 │ 5% ││ │
+│ │ │ Arroz 1kg │ 3 │ S/ 3.50 │ S/ 10.50 │ 4% ││ │
+│ │ │ Galletas soda │ 8 │ S/ 2.50 │ S/ 20.00 │ 8% ││ │
+│ │ │ Yogur fresa │ 12 │ S/ 3.00 │ S/ 36.00 │ 15% ││ │
+│ │ │ Pan molde │ 6 │ S/ 4.50 │ S/ 27.00 │ 11% ││ │
+│ │ │ Aceite 1L │ 4 │ S/ 8.00 │ S/ 32.00 │ 13% ││ │
+│ │ │ Fideo espagueti │ 10 │ S/ 2.80 │ S/ 28.00 │ 11% ││ │
+│ │ │ Atún en agua │ 7 │ S/ 4.50 │ S/ 31.50 │ 13% ││ │
+│ │ │ Mayonesa 200g │ 5 │ S/ 5.50 │ S/ 27.50 │ 11% ││ │
+│ │ │ Gaseosa 1.5L │ 3 │ S/ 6.00 │ S/ 18.00 │ 7% ││ │
+│ │ ├─────────────────────────────────────────────────────────────────────┤│ │
+│ │ │ TOTALES │ 63 │ │ S/ 247.50 │ 100% ││ │
+│ │ └─────────────────────────────────────────────────────────────────────┘│ │
+│ │ │ │
+│ │ Mostrando 10 de 10 productos vendidos │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+│ ┌─────────────────────────────────────────────────────────────────────────┐ │
+│ │ │ │
+│ │ [ 🖨️ IMPRIMIR REPORTE ] [ 💾 GUARDAR PDF ] │ │
+│ │ │ │
+│ └─────────────────────────────────────────────────────────────────────────┘ │
+│ │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+## Elementos obligatorios
+
+### 1. Cabecera
+- **Título:** "📄 Reporte del Día" (24px, negrita, #212121)
+- **Fecha actual:** formato "Hoy: DD/MM/AAAA" (14px, #757575, alineado a la derecha)
+- Margen inferior: 24px
+
+### 2. Tarjetas de Resumen (KPI principales)
+- Contenedor: dos tarjetas lado a lado (grid 2 columnas, gap 24px)
+- **Tarjeta 1: Total Ingresos**
+  - Fondo: blanco (#FFFFFF)
+  - Border radius: 12px
+  - Sombra suave
+  - Padding: 24px
+  - Ícono: 💰 (grande, 32px, #2E7D32)
+  - Título: "TOTAL INGRESOS" (18px, semibold, #757575)
+  - Valor: "S/ [XX.XX]" (48px, negrita, #2E7D32)
+  - Subtítulo: "Ventas realizadas: [X]" (14px, #757575)
+- **Tarjeta 2: Ganancia Estimada**
+  - Fondo: blanco (#FFFFFF)
+  - Border radius: 12px
+  - Sombra suave
+  - Padding: 24px
+  - Ícono: 📈 (grande, 32px, #FF9800)
+  - Título: "GANANCIA ESTIMADA" (18px, semibold, #757575)
+  - Valor: "S/ [XX.XX]" (48px, negrita, #FF9800 o #2E7D32)
+  - Subtítulo: "Margen promedio: [XX]%" (14px, #757575)
+
+### 3. Tabla de Productos Vendidos
+- **Título sección:** "🛒 PRODUCTOS VENDIDOS HOY" (18px, semibold, #212121)
+- Margen superior: 24px
+- **Columnas (mínimo obligatorio):**
+  | Columna | Ancho sugerido | Formato |
+  |---------|---------------|---------|
+  | Producto | 35% | Texto normal |
+  | Cantidad | 10% | Número entero |
+  | Precio Unit. | 15% | S/ XX.XX |
+  | Subtotal | 15% | S/ XX.XX |
+  | % Ventas | 10% | XX% (barra visual opcional) |
+- **Fila de totales (al final de la tabla):**
+  - Fondo: #F5F5F5
+  - Fuente: semibold
+  - Muestra suma de cantidades y suma de subtotales
+  - Columna % Ventas: "100%"
+- **Comportamiento:**
+  - Ordenar por clic en cabecera (opcional para prototipo: solo visual)
+  - Si no hay ventas hoy: mostrar mensaje "📭 No hay ventas registradas hoy" (centrado, padding 40px)
+
+### 4. Botones de exportación (fila inferior)
+- Contenedor: flex row, centro o derecha, gap 16px, margen superior 24px
+- **Botón IMPRIMIR REPORTE:**
+  - Estilo: Botón primario (verde)
+  - Texto: "🖨️ IMPRIMIR REPORTE"
+  - Altura: 48px
+  - Al hacer clic: simula envío a impresora (en prototipo: mensaje "✅ Enviando a impresora...")
+- **Botón GUARDAR PDF:**
+  - Estilo: Botón secundario (gris borde)
+  - Texto: "💾 GUARDAR PDF"
+  - Altura: 48px
+  - Al hacer clic: simula descarga de PDF (en prototipo: mensaje "📄 PDF guardado en Escritorio")
+
+### 5. Versión impresa/PDF (diseño alternativo para impresión)
+- **Nota para el diseñador:** Crear un frame adicional que represente cómo se verá el reporte cuando se imprima o guarde como PDF.
+- **Características del diseño impreso:**
+  - Sin colores de fondo (blanco y negro o escala de grises)
+  - Sin sombras
+  - Fuentes: serif (Times New Roman) o Arial
+  - Encabezado con nombre del negocio: "MINIMARKET VILLA CARRION"
+  - Dirección: "Centro poblado de Totoral, San Jerónimo, Andahuaylas"
+  - Fecha y hora de impresión
+  - Misma estructura: resumen + tabla productos vendidos
+  - Pie de página: "Reporte generado por SISVENIN"
+
+## Interacciones navegables (para el prototipo en Figma)
+
+| # | Acción | Destino |
+|---|--------|---------|
+| 1 | Clic en cabecera de columna (Producto, Cantidad, etc.) | Ordena la tabla ascendente/descendente (simulado) |
+| 2 | Clic en "IMPRIMIR REPORTE" | Muestra mensaje temporal "✅ Enviando a impresora..." (tooltip o toast) |
+| 3 | Clic en "GUARDAR PDF" | Muestra mensaje temporal "📄 PDF guardado en Escritorio" |
+| 4 | (Opcional) Clic en fila de producto | Podría mostrar detalle (no obligatorio) |
+
+## Estados del Reporte
+
+### Estado 1: Con ventas hoy (FELIZ)
+- Tarjetas con valores > S/ 0
+- Tabla con productos vendidos
+- Botones habilitados
+
+### Estado 2: Sin ventas hoy
+- Total Ingresos: S/ 0.00
+- Ganancia Estimada: S/ 0.00
+- Subtítulo: "Ventas realizadas: 0"
+- Tabla: mensaje "📭 No hay ventas registradas hoy"
+- Botones: habilitados pero al imprimir/PDF genera reporte vacío
+
+### Estado 3: Cargando datos (opcional)
+- Mostrar skeletons o texto "Cargando datos..."
+
+## Datos de ejemplo (para el prototipo)
+
+```javascript
+// Resumen del día
+resumen = {
+  total_ingresos: 247.50,
+  ganancia_estimada: 89.75,
+  total_ventas: 3,
+  margen_promedio: 36, // porcentaje
+  fecha: "26/05/2026"
+}
+
+// Productos vendidos (para la tabla)
+productos_vendidos = [
+  { nombre: "Leche evaporada", cantidad: 5, precio_unitario: 2.50, subtotal: 12.50, porcentaje: 5 },
+  { nombre: "Arroz 1kg", cantidad: 3, precio_unitario: 3.50, subtotal: 10.50, porcentaje: 4 },
+  { nombre: "Galletas soda", cantidad: 8, precio_unitario: 2.50, subtotal: 20.00, porcentaje: 8 },
+  { nombre: "Yogur fresa", cantidad: 12, precio_unitario: 3.00, subtotal: 36.00, porcentaje: 15 },
+  { nombre: "Pan molde", cantidad: 6, precio_unitario: 4.50, subtotal: 27.00, porcentaje: 11 },
+  { nombre: "Aceite 1L", cantidad: 4, precio_unitario: 8.00, subtotal: 32.00, porcentaje: 13 },
+  { nombre: "Fideo espagueti", cantidad: 10, precio_unitario: 2.80, subtotal: 28.00, porcentaje: 11 },
+  { nombre: "Atún en agua", cantidad: 7, precio_unitario: 4.50, subtotal: 31.50, porcentaje: 13 },
+  { nombre: "Mayonesa 200g", cantidad: 5, precio_unitario: 5.50, subtotal: 27.50, porcentaje: 11 },
+  { nombre: "Gaseosa 1.5L", cantidad: 3, precio_unitario: 6.00, subtotal: 18.00, porcentaje: 7 }
+]
+
+// Totales calculados
+total_cantidad = 63  // suma de cantidades
+total_subtotal = 247.50  // suma de subtotales

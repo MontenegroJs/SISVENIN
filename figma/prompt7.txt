@@ -1,0 +1,8 @@
+
+#	Nombre del prompt	Pantalla/Componente	¿Obligatorio?
+0	Sistema de diseño (Design System)	Componentes base (botones, inputs, tarjetas, tabla, modal, layout maestro, colores, tipografía)	✅ Sí (base para todo)
+1	Dashboard	Pantalla principal con ganancia estimada + alertas clickeables	✅ Sí
+2	POS (Punto de Venta)	Pantalla de venta: búsqueda, carrito, total, vuelto, botones confirmar/cerrar caja	✅ Sí
+3	Gestión de Productos	Pantalla de administración: tabla + formulario modal con precio sugerido	✅ Sí
+4	Reporte del día	Pantalla de reporte: resumen (total ingresos, ganancia) + tabla productos vendidos + botones imprimir/PDF	✅ Sí
+5	Prueba de velocidad	Pantalla de prueba: cronómetro, registro de 5 productos, comparación manual vs sistema, % mejora	✅ Sí (está en HU-07 y Sprint 4)

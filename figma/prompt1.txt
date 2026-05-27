@@ -1,0 +1,227 @@
+# Prompt para Figma - Sistema de Diseño SISVENIN
+
+## Contexto del proyecto
+SISVENIN es un sistema de escritorio para Minimarket Villa Carrion. 
+Usuaria final: dueña de minimarket (50+ años). 
+Necesita interfaz EXTREMADAMENTE SIMPLE, botones GRANDES, texto legible, como usar WhatsApp. 
+Nada de menús complejos ni opciones ocultas.
+
+## Paleta de colores (acordada)
+- Verde principal: #2E7D32 (botones positivos: Confirmar Venta, Guardar, Aceptar)
+- Rojo alerta: #D32F2F (botones de eliminar, advertencias de stock/vencimiento)
+- Fondo ventana: #F5F5F5 (gris muy claro)
+- Tarjetas/fondos de sección: #FFFFFF (blanco)
+- Texto principal: #212121 (casi negro)
+- Texto secundario: #757575 (gris medio)
+- Bordes y divisiones: #E0E0E0
+- Hover sobre botón primario: #1B5E20 (verde más oscuro)
+- Hover sobre fila de tabla: #FAFAFA
+- Placeholder inputs: #BDBDBD
+
+## Tipografía
+- Fuente principal: 'Segoe UI' (Windows nativo) o 'Roboto' (fallback sans-serif)
+- Tamaños:
+  - Títulos de pantalla: 24px, negrita
+  - Subtítulos (secciones): 18px, semibold
+  - Cuerpo de texto: 14px, regular
+  - Botones: 16px, semibold
+  - Total en POS: 32px, negrita, color verde principal
+  - Vuelto en POS: 48px, negrita, color verde principal
+  - Precio en carrito: 14px, semibold
+- Altura de línea: 1.4 para legibilidad
+
+## Espaciado base (múltiplos de 8px - sistema octal)
+- Padding pequeño: 8px
+- Padding mediano: 16px
+- Padding grande: 24px
+- Margen entre elementos: 16px
+- Margen entre secciones: 24px
+- Bordes redondeados: 
+  - Inputs y botones: 8px
+  - Tarjetas: 12px
+  - Modal: 16px
+  - Alertas: 8px
+
+## Componentes que debes crear (como componentes reutilizables en Figma)
+
+### 1. Botón primario (verde)
+**Uso:** Acciones principales (Confirmar Venta, Guardar Producto, Aceptar)
+- Fondo: #2E7D32
+- Texto: blanco (#FFFFFF), 16px, semibold
+- Padding: 12px 24px
+- Altura mínima: 48px
+- Border radius: 8px
+- Sin borde
+- **Hover:** #1B5E20
+- **Estado deshabilitado:** #A5D6A7, texto #757575
+
+### 2. Botón secundario (gris borde)
+**Uso:** Acciones secundarias (Cancelar, Cerrar, Limpiar)
+- Fondo: transparente
+- Borde: 1px sólido #E0E0E0
+- Texto: #757575, 16px, semibold
+- Padding: 12px 24px
+- Altura mínima: 48px
+- Border radius: 8px
+- **Hover:** fondo #F5F5F5
+
+### 3. Botón peligro (rojo)
+**Uso:** Acciones destructivas (Eliminar producto, Vaciar carrito)
+- Fondo: #D32F2F
+- Texto: blanco, 14px, semibold
+- Padding: 8px 16px
+- Altura mínima: 40px
+- Border radius: 8px
+- **Hover:** #C62828
+
+### 4. Botón ícono (circular o cuadrado pequeño)
+**Uso:** Acciones en tablas (editar, eliminar, agregar al carrito)
+- Tamaño: 32x32px o 36x36px
+- Fondo: transparente
+- Ícono: #757575
+- **Hover:** fondo #F5F5F5, ícono #212121
+
+### 5. Input de texto
+- Borde: 1px sólido #E0E0E0
+- Border radius: 8px
+- Padding: 12px
+- Fuente: 14px, regular
+- Color texto: #212121
+- Placeholder: #BDBDBD, 14px
+- Altura: 48px (fácil de tocar)
+- Ancho: 100% del contenedor (o fijo si se especifica)
+- **Focus:** borde #2E7D32 (2px), sin outline, sombra suave 0 0 0 2px rgba(46,125,50,0.2)
+
+### 6. Input de número (para cantidades, precios, margen)
+- Hereda de Input de texto
+- Alineación texto: derecha (para precios y cantidades)
+- Botones + y - opcionales (pero no obligatorios)
+
+### 7. Select (desplegable)
+- Mismo estilo que Input de texto
+- Ícono flecha abajo a la derecha
+- Opciones: padding 12px, hover #F5F5F5
+
+### 8. Tarjeta (Card)
+**Uso:** Resumen de venta, ganancia del día, métricas destacadas
+- Fondo: blanco
+- Border radius: 12px
+- Sombra: 0px 2px 4px rgba(0,0,0,0.05), 0px 1px 2px rgba(0,0,0,0.03)
+- Padding: 16px
+- Borde: 1px sólido #F0F0F0 (opcional, suave)
+
+### 9. Tabla (para listado de productos, carrito, reportes)
+**Estructura:**
+- Cabecera: fondo #F5F5F5, texto #757575, 14px, semibold, padding 12px 16px, borde inferior #E0E0E0
+- Filas: fondo blanco, borde inferior 1px #E0E0E0
+- Celdas: padding 12px 16px, texto #212121, 14px
+- **Hover sobre fila:** #FAFAFA
+- **Ancho mínimo sugerido:** 800px (si hay muchas columnas, scroll horizontal)
+
+### 10. Alerta (no intrusiva)
+**Uso:** Stock bajo (<5) o vencimiento próximo (<7 días)
+- **Stock bajo:** fondo #FFEBEE (rojo muy claro), borde izquierdo 4px sólido #D32F2F
+- **Vencimiento próximo:** fondo #FFF3E0 (naranja muy claro), borde izquierdo 4px sólido #FF9800
+- Padding: 12px 16px
+- Border radius: 8px
+- Texto: #212121, 14px
+- Ícono a la izquierda (⚠️ para vencimiento, 🔴 o 📦 para stock bajo)
+- **Debe ser clickeable** (cursor: pointer)
+- **Hover:** opacidad 0.9
+
+### 11. Modal (diálogo)
+**Uso:** Formulario de producto, confirmación de acciones, ticket de venta
+- Overlay: fondo rgba(0,0,0,0.5), blur(2px) opcional
+- Fondo modal: blanco
+- Border radius: 16px
+- Padding: 24px
+- Ancho: 500px (formulario pequeño) o 600px (formulario grande/ticket)
+- Sombra: 0px 20px 25px -5px rgba(0,0,0,0.1)
+- Cabecera: título 20px, negrita, borde inferior #E0E0E0, padding-bottom 16px
+- Cuerpo: padding 24px 0
+- Pie: botones a la derecha (primario + secundario)
+
+### 12. Layout maestro (master frame o template)
+**Estructura general de la aplicación:**
+┌─────────────────────────────────────────────────┐
+│ Menú lateral (240px) │ Área de contenido │
+│ │ (resto) │
+│ • Dashboard │ ┌───────────────────┐ │
+│ • POS │ │ Cabecera │ │
+│ • Productos │ │ Título + fecha │ │
+│ • Reporte │ └───────────────────┘ │
+│ • Prueba velocidad │ │
+│ │ ┌───────────────────┐ │
+│ │ │ │ │
+│ │ │ Contenido principal│ │
+│ │ │ │ │
+│ │ └───────────────────┘ │
+└─────────────────────────────────────────────────┘
+
+text
+- **Menú lateral:** 
+  - Fondo: #FFFFFF
+  - Ancho: 240px
+  - Borde derecho: 1px #E0E0E0
+  - Items del menú: padding 12px 16px, ícono 20x20px, texto 16px
+  - **Hover item:** fondo #F5F5F5, borde izquierdo 3px #2E7D32
+  - **Item activo:** fondo #E8F5E9 (verde muy claro), borde izquierdo 3px #2E7D32, texto #2E7D32
+
+- **Área de contenido:**
+  - Fondo: #F5F5F5
+  - Padding: 24px
+  - Scroll vertical si es necesario
+
+- **Cabecera (dentro del área de contenido):**
+  - Título de pantalla: 24px, negrita, #212121
+  - Fecha/hora: 14px, #757575, a la derecha
+  - Margen inferior: 24px
+
+## Íconos recomendados
+Usar **Material Icons** (gratuito, integrable en Figma) o **Font Awesome**.
+
+| Ícono | Uso |
+|-------|-----|
+| 🏠 (home) | Dashboard |
+| 🛒 (shopping_cart) | POS |
+| 📦 (inventory) | Productos |
+| 📄 (description) | Reporte del día |
+| ⏱️ (timer) | Prueba velocidad |
+| 🔍 (search) | Búsqueda |
+| ➕ (add) | Agregar producto |
+| ✏️ (edit) | Editar |
+| 🗑️ (delete) | Eliminar |
+| 🖨️ (print) | Imprimir |
+| 💾 (save) | Guardar PDF |
+| ❌ (close) | Cerrar modal |
+| ⚠️ (warning) | Alerta vencimiento |
+| 🔴 (circle) | Alerta stock bajo |
+| + / - | Cantidades |
+
+## Notas de UX (IMPORTANTES)
+1. **Jerarquía visual:** Lo más importante debe ser lo más grande (vuelto, total, ganancia)
+2. **Botones principales:** Siempre a la derecha o abajo a la derecha
+3. **Botones secundarios (cancelar/cerrar):** A la izquierda del botón principal
+4. **Feedback visual:** Hover y clic en todos los elementos interactivos
+5. **Campos numéricos:** Permitir escribir con teclado (no solo flechas)
+6. **Alertas:** No bloquean la interacción (son solo visuales, no modales)
+7. **Tabla de carrito:** Cada fila debe tener botón [X] para eliminar
+8. **Vuelto:** Solo se muestra si PAGO CON >= total; si no, mensaje rojo "Monto insuficiente"
+9. **Tamaño mínimo de ventana:** 1024x768 (recomendado 1280x720)
+10. **Espaciado generoso:** Mínimo 16px entre elementos para evitar clics accidentales
+11. **Colores:** Máximo 3 colores principales por pantalla (verde, rojo, gris) - evitar abrumar
+
+## Restricciones técnicas (para que el diseñador las sepa)
+- La implementación será en **PySide6** (Qt para Python)
+- Los componentes deben ser **posibles de replicar** en Qt (QPushButton, QLineEdit, QTableWidget, QStackedWidget)
+- Las alertas clickeables serán QPushButton con estilo especial
+- El menú lateral será QListWidget o QPushButtons apilados
+- El área central será QStackedWidget para cambiar entre pantallas
+
+## Criterios de éxito para este sistema de diseño
+- [ ] La dueña puede identificar el botón más importante (verde, grande)
+- [ ] Las alertas llaman la atención pero no asustan
+- [ ] El texto es legible a 1 metro de distancia (tamaños grandes)
+- [ ] Un usuario nuevo completa una venta sin ayuda (RNF-02)
+- [ ] Los colores son consistentes en toda la aplicación
+

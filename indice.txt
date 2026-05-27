@@ -6,7 +6,6 @@ D:\02. Proyectos\Proyectos Desktop\SISVENIN\delModu.py
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\indice.txt
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\newModu.bat
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\newModu.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\prompts
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\README.md
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\requirements.txt
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\run.bat
@@ -19,13 +18,6 @@ D:\02. Proyectos\Proyectos Desktop\SISVENIN\.github\pull_request_template.md
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\.pytest_cache\README.md
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\database\.gitkeep
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\database\sisvenin.db
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\prompts\prompt1.txt
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\prompts\prompt2.txt
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\prompts\prompt3.txt
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\prompts\prompt4.txt
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\prompts\prompt5.txt
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\prompts\prompt6.txt
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\prompts\prompt7.txt
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\main.py
 D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\app.py

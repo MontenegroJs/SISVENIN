@@ -1,0 +1,155 @@
+# Prompt para Figma - Pantalla: Dashboard (Principal)
+
+## Contexto
+Es la pantalla que ve la dueña al abrir SISVENIN. Es el "hogar" del sistema. 
+Debe mostrar de forma CLARA y GRANDE cuánto ha ganado hoy. 
+También debe mostrar alertas de productos que necesita comprar (stock bajo) o que están por vencer. 
+Las alertas son clickeables para ir al producto.
+
+**Referencia de simplicidad:** Como la pantalla de inicio de WhatsApp Web (limpia, solo lo esencial).
+
+## HU relacionadas
+- HU-03: Dashboard de ganancia estimada del día
+- HU-04: Alertas visuales de stock bajo y vencimiento
+
+## Layout (área derecha - el menú lateral ya está en el master frame)
+La siguiente estructura es SOLO para el área de contenido (fondo #F5F5F5, padding 24px):
+
+┌────────────────────────────────────────────────────────────┐
+│ 📊 Dashboard Hoy: 26/05/2026 │
+├────────────────────────────────────────────────────────────┤
+│ │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ 💰 GANANCIA ESTIMADA DEL DÍA │ │
+│ │ │ │
+│ │ S/ 247.50 │ │
+│ │ │ │
+│ │ 🟢 Basado en ventas de hoy (3 ventas) │ │
+│ └────────────────────────────────────────────────────┘ │
+│ │
+│ ┌────────────────────────────────────────────────────┐ │
+│ │ ⚠️ ALERTAS Ver todas → │ │
+│ │ │ │
+│ │ ┌──────────────────────────────────────────────┐ │ │
+│ │ │ 🔴 STOCK BAJO (3) │ │ │
+│ │ │ • Leche evaporada (stock: 2) │ │ │
+│ │ │ • Arroz 1kg (stock: 1) │ │ │
+│ │ │ • Galletas soda (stock: 4) │ │ │
+│ │ └──────────────────────────────────────────────┘ │ │
+│ │ │ │
+│ │ ┌──────────────────────────────────────────────┐ │ │
+│ │ │ ⚠️ PRÓXIMO A VENCER (2) │ │ │
+│ │ │ • Yogur fresa (vence: 28/05/2026 - 2 días) │ │ │
+│ │ │ • Pan molde (vence: 30/05/2026 - 4 días) │ │ │
+│ │ └──────────────────────────────────────────────┘ │ │
+│ └────────────────────────────────────────────────────┘ │
+│ │
+└────────────────────────────────────────────────────────────┘
+
+
+## Elementos obligatorios
+
+### 1. Cabecera
+- **Título:** "Dashboard" o "Inicio" (24px, negrita, #212121)
+- **Fecha actual:** formato "Hoy: DD/MM/YYYY" (14px, #757575, alineado a la derecha)
+- Margen inferior: 24px
+
+### 2. Tarjeta de Ganancia (elemento principal - MÁS IMPORTANTE)
+- Fondo: blanco (#FFFFFF)
+- Border radius: 12px
+- Sombra suave
+- Padding: 24px
+- Margen inferior: 24px
+- **Contenido:**
+  - Ícono 💰 (o monetization) a la izquierda del título
+  - Título: "GANANCIA ESTIMADA DEL DÍA" (18px, semibold, #757575)
+  - Monto de ganancia: S/ [XXX.XX] (48px o 56px, negrita, #2E7D32 - verde)
+  - Subtítulo: "Basado en [X] ventas de hoy" (14px, #757575)
+  - (Opcional) Tooltip al hacer hover: "Ganancia = ventas - costo de compra"
+
+### 3. Sección de Alertas
+- Fondo: blanco (#FFFFFF)
+- Border radius: 12px
+- Sombra suave
+- Padding: 20px
+- **Cabecera de alertas:**
+  - Título "⚠️ ALERTAS" (18px, semibold, #212121)
+  - Botón "Ver todas →" (14px, #2E7D32, clickeable - navega a lista de productos)
+
+### 4. Subsección: Stock Bajo (si hay productos con stock < 5)
+- **Solo visible si hay al menos un producto con stock < 5**
+- Fondo: #FFEBEE (rojo muy claro)
+- Borde izquierdo: 4px sólido #D32F2F
+- Border radius: 8px
+- Padding: 12px 16px
+- Margen inferior: 12px
+- **Título:** "🔴 STOCK BAJO (X)" - donde X es el número de productos (14px, semibold, #D32F2F)
+- **Lista de productos** (máximo 5, si hay más mostrar "... y X más"):
+  - Cada producto: "• [Nombre producto] (stock: X)" (14px, #212121)
+  - Cada producto debe ser **clickeable** (navega a Gestión de Productos y selecciona ese producto)
+  - Hover sobre cada producto: subrayado o fondo más claro
+
+### 5. Subsección: Próximo a Vencer (si hay productos con vencimiento < 7 días)
+- **Solo visible si hay al menos un producto con vencimiento < 7 días**
+- Fondo: #FFF3E0 (naranja muy claro)
+- Borde izquierdo: 4px sólido #FF9800
+- Border radius: 8px
+- Padding: 12px 16px
+- **Título:** "⚠️ PRÓXIMO A VENCER (X)" - donde X es el número de productos (14px, semibold, #FF9800)
+- **Lista de productos:**
+  - Cada producto: "• [Nombre producto] (vence: DD/MM/YYYY - X días)" (14px, #212121)
+  - Color del texto de días: rojo si es < 3 días, naranja si es 3-6 días, normal si es 7
+  - Cada producto debe ser **clickeable** (navega a Gestión de Productos)
+
+### 6. Estado sin alertas (caso feliz)
+- Si NO hay stock bajo Y NO hay vencimientos próximos:
+  - Mostrar un mensaje amigable dentro de la sección de alertas:
+  - ✅ "¡Todo en orden! No hay productos con stock bajo ni próximos a vencer."
+  - Ícono verde ✅
+  - Texto #757575, centrado, padding 24px
+
+## Interacciones navegables (para el prototipo en Figma)
+
+| # | Acción | Destino |
+|---|--------|---------|
+| 1 | Clic en botón "Ver todas →" | Navega a Pantalla: Gestión de Productos (Prompt 3) |
+| 2 | Clic en producto de "STOCK BAJO" | Navega a Pantalla: Gestión de Productos (Prompt 3) y resalta ese producto |
+| 3 | Clic en producto de "PRÓXIMO A VENCER" | Navega a Pantalla: Gestión de Productos (Prompt 3) y resalta ese producto |
+| 4 | (Opcional) Clic en ícono de refrescar | Recarga los datos (para demostración, puede no hacer nada) |
+
+## Estados del Dashboard
+
+### Estado 1: Con datos (feliz)
+- Hay ventas hoy → muestra ganancia > S/ 0
+- Hay alertas → muestra listas de productos
+
+### Estado 2: Sin ventas hoy
+- Ganancia = S/ 0.00
+- Subtítulo: "Aún no hay ventas registradas hoy"
+- Texto en gris, sin énfasis especial
+
+### Estado 3: Sin alertas
+- Sección de alertas muestra "¡Todo en orden!"
+
+### Estado 4: Cargando datos (opcional para prototipo)
+- Mostrar skeletons o texto "Cargando..." (gris, centrado)
+
+## Datos de ejemplo (para el prototipo - usar estos valores visualmente)
+
+```javascript
+// Ganancia
+ganancia_dia = 247.50
+numero_ventas = 3
+
+// Stock bajo
+productos_stock_bajo = [
+  { nombre: "Leche evaporada", stock: 2 },
+  { nombre: "Arroz 1kg", stock: 1 },
+  { nombre: "Galletas soda", stock: 4 }
+]
+
+// Próximo a vencer
+productos_vencimiento = [
+  { nombre: "Yogur fresa", vence: "28/05/2026", dias_restantes: 2 },
+  { nombre: "Pan molde", vence: "30/05/2026", dias_restantes: 4 }
+]
