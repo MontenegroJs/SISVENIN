@@ -1,47 +1,62 @@
-# src/app/app.py
 """
 Aplicación principal SISVENIN
 """
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel
 
-from .base_layout import BaseLayout          # ← importación relativa (misma carpeta)
-from .views.producto_vista import ProductoVista
+from src.app.base_layout import BaseLayout
+from src.app.views.producto.producto_vista import ProductoVista  # ← CORREGIDO: añadir 'src.app.'
 
 
 class App(BaseLayout):
-    """Aplicación principal que extiende BaseLayout"""
+    """Aplicación principal que extiende BaseLayout con menú lateral"""
     
     def __init__(self):
         super().__init__()
-        
-        self.setWindowTitle("SISVENIN - Minimarket Villa Carrion")
         self._registrar_modulos()
+        # Mostrar Productos por defecto (único módulo disponible)
+        self._mostrar_modulo_por_nombre("productos")
     
     def _registrar_modulos(self):
         """Registra todos los módulos de la aplicación"""
         
-        # Módulo Producto
+        # Módulo Productos (completo)
         self.vista_productos = ProductoVista()
-        self.registrar_modulo("productos", self.vista_productos, habilitar_boton=True)
+        self.registrar_modulo(
+            nombre="productos",
+            widget=self.vista_productos,
+            texto_menu="Productos",
+            icono="📦"
+        )
         
-        # Placeholders para módulos futuros
-        self.vista_clientes = QLabel("👥 Módulo de Clientes\n\nPróximamente disponible")
-        self.vista_clientes.setAlignment(Qt.AlignCenter)
-        self.vista_clientes.setStyleSheet("font-size: 18px; color: #555; padding: 50px;")
-        self.registrar_modulo("clientes", self.vista_clientes)
+        # Placeholders para módulos futuros (deshabilitados)
+        self._registrar_modulo_placeholder("dashboard", "Dashboard", "🏠", habilitado=False)
+        self._registrar_modulo_placeholder("pos", "POS", "🛒", habilitado=False)
+        self._registrar_modulo_placeholder("reporte", "Reporte del día", "📄", habilitado=False)
+        self._registrar_modulo_placeholder("velocidad", "Prueba velocidad", "⏱️", habilitado=False)
+        self._registrar_modulo_placeholder("ventas", "Ventas", "💰", habilitado=False)
+        self._registrar_modulo_placeholder("configuracion", "Configuración", "⚙️", habilitado=False)
+    
+    def _registrar_modulo_placeholder(self, nombre, texto_menu, icono, habilitado=False):
+        """Registra un módulo placeholder para funcionalidades futuras"""
+        from PySide6.QtWidgets import QLabel
+        from PySide6.QtCore import Qt
         
-        self.vista_ventas = QLabel("💰 Módulo de Ventas\n\nPróximamente disponible")
-        self.vista_ventas.setAlignment(Qt.AlignCenter)
-        self.vista_ventas.setStyleSheet("font-size: 18px; color: #555; padding: 50px;")
-        self.registrar_modulo("ventas", self.vista_ventas)
-        
-        self.vista_reportes = QLabel("📊 Módulo de Reportes\n\nPróximamente disponible")
-        self.vista_reportes.setAlignment(Qt.AlignCenter)
-        self.vista_reportes.setStyleSheet("font-size: 18px; color: #555; padding: 50px;")
-        self.registrar_modulo("reportes", self.vista_reportes)
-        
-        self.vista_config = QLabel("⚙️ Configuración\n\nPróximamente disponible")
-        self.vista_config.setAlignment(Qt.AlignCenter)
-        self.vista_config.setStyleSheet("font-size: 18px; color: #555; padding: 50px;")
-        self.registrar_modulo("configuracion", self.vista_config)
+        placeholder = QLabel(f"{icono} {texto_menu}\n\n🚧 Próximamente disponible")
+        placeholder.setAlignment(Qt.AlignCenter)
+        placeholder.setStyleSheet(f"""
+            font-size: 18px; 
+            color: {self.COLOR_TEXTO_SECUNDARIO}; 
+            padding: 50px;
+        """)
+        self.registrar_modulo(
+            nombre=nombre,
+            widget=placeholder,
+            texto_menu=texto_menu,
+            icono=icono,
+            habilitar_boton=habilitado
+        )
+    
+    def _mostrar_modulo_por_nombre(self, nombre):
+        """Muestra un módulo específico por su nombre"""
+        if nombre in self.modulos:
+            info = self.modulos[nombre]
+            self._mostrar_modulo(info["indice"], info["texto_menu"])

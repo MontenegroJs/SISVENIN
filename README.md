@@ -79,4 +79,4 @@ Vista (pantalla)	    nombre_vista.py	            producto_vista.py
 Pruebas	                test_nombre.py	            test_producto.py
 
 ## Indexar archivos y carpetas
-dir /s /b > indice.txt
+git ls-files --cached --others --exclude-standard > indice.txt
