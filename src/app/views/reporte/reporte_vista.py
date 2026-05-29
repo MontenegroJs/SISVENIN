@@ -1,16 +1,18 @@
 """
-Módulo Producto - Vista
+Módulo Reporte - Vista
 """
+from typing import Optional, Callable
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
-from src.app.controllers.producto_controlador import ProductoControlador
+from src.app.controllers.reporte_controlador import ReporteControlador
 
 
-class ProductoVista(QWidget):
-    def __init__(self):
-        super().__init__()
+class ReporteVista(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
         layout = QVBoxLayout(self)
         
-        titulo = QLabel(f"📦 Gestión de Productos")
+        titulo = QLabel(f"📄 Reporte del Día")
         titulo.setStyleSheet("font-size: 20px; font-weight: bold; color: black;")
         layout.addWidget(titulo)
         
@@ -22,5 +24,5 @@ class ProductoVista(QWidget):
         layout.addWidget(self.label)
     
     def cargar_datos(self):
-        datos = ProductoControlador.listar_ejemplo()
-        self.label.setText(f"Cargados {len(datos)} productos")
+        datos = ReporteControlador.obtener_reporte_ejemplo()
+        self.label.setText(f"Total ingresos: S/ {datos.get('total', 0):.2f}")

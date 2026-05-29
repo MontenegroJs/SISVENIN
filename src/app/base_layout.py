@@ -1,192 +1,573 @@
-# src/app/base_layout.py
 """
-BaseLayout - Layout genérico de la aplicación
+BaseLayout - Layout genérico de la aplicación con menú lateral izquierdo
+Diseño basado completamente en el Prompt 0 (Sistema de Diseño) de Figma SISVENIN
+
+Especificaciones aplicadas:
+- Paleta de colores: Verde #2E7D32, Rojo #D32F2F, Fondo #F5F5F5
+- Tipografía: DM Sans (con fallback Segoe UI, sans-serif)
+- Espaciado: Sistema octal (múltiplos de 8px)
+- Line-height: 1.4 para legibilidad
 """
-from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-                               QLabel, QPushButton, QStackedWidget, QStatusBar)
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+
+import os
+from datetime import datetime
+from typing import Optional, Callable, List, Any
+
+from PySide6.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QLabel, QStackedWidget, QFrame, QScrollArea,
+    QPushButton, QMessageBox, QApplication
+)
+from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtGui import QFont, QFontDatabase, QColor, QIcon
 
 
 class BaseLayout(QMainWindow):
+    """
+    Layout base con menú lateral izquierdo y área de contenido derecha.
+    Siguiendo el diseño acordado en el Prompt 0 de Figma.
+    
+    Este layout NO importa componentes compartidos. Su responsabilidad es
+    exclusivamente estructural. Las vistas deben importar y usar los
+    componentes compartidos directamente.
+    """
+    
+    # ==================== CONSTANTES DE DISEÑO (Prompt 0) ====================
+    
+    # Colores
+    COLOR_PRIMARIO = "#2E7D32"
+    COLOR_PRIMARIO_HOVER = "#1B5E20"
+    COLOR_PRIMARIO_DESABILITADO = "#A5D6A7"
+    
+    COLOR_PELIGRO = "#D32F2F"
+    COLOR_PELIGRO_HOVER = "#C62828"
+    
+    COLOR_FONDO_VENTANA = "#F5F5F5"
+    COLOR_TARJETA = "#FFFFFF"
+    COLOR_TEXTO_PRINCIPAL = "#212121"
+    COLOR_TEXTO_SECUNDARIO = "#757575"
+    COLOR_BORDE = "#E0E0E0"
+    COLOR_PLACEHOLDER = "#BDBDBD"
+    COLOR_HOVER_FILA = "#FAFAFA"
+    
+    COLOR_ALERTA_STOCK_BG = "#FFEBEE"
+    COLOR_ALERTA_STOCK_BORDER = "#D32F2F"
+    COLOR_ALERTA_VENCE_BG = "#FFF3E0"
+    COLOR_ALERTA_VENCE_BORDER = "#FF9800"
+    COLOR_MENU_ACTIVO_BG = "#E8F5E9"
+    COLOR_MENU_ACTIVO_BORDER = "#2E7D32"
+    
+    # Tamaños de fuente (en píxeles)
+    FUENTE_TITULO = 30
+    FUENTE_SUBTITULO = 20
+    FUENTE_CUERPO = 17
+    FUENTE_BOTON = 16
+    FUENTE_TOTAL_POS = 32
+    FUENTE_VUELTO_POS = 48
+    FUENTE_ALERTA = 14
+    
+    # Pesos de fuente (usando valores numéricos de Qt)
+    PESO_NORMAL = QFont.Normal      # 50 - Regular
+    PESO_MEDIUM = QFont.Medium      # 57 - Medium
+    PESO_SEMIBOLD = QFont.DemiBold  # 63 - Semibold
+    PESO_BOLD = QFont.Bold          # 75 - Bold
+    
+    # Espaciados (sistema octal)
+    PADDING_PEQUENO = 8
+    PADDING_MEDIANO = 16
+    PADDING_GRANDE = 24
+    MARGEN_ENTRE_ELEMENTOS = 16
+    MARGEN_ENTRE_SECCIONES = 24
+    
+    BORDER_RADIUS_BOTON = 8
+    BORDER_RADIUS_TARJETA = 12
+    BORDER_RADIUS_MODAL = 16
+    BORDER_RADIUS_ALERTA = 8
+    BORDER_RADIUS_INPUT = 8
+    
+    # Dimensiones
+    ANCHO_MENU_LATERAL = 270
+    TAMANO_MINIMO_VENTANA = (1024, 600)
+    TAMANO_RECOMENDADO_VENTANA = (1280, 720)
     
     def __init__(self):
         super().__init__()
         
-        self.setGeometry(100, 100, 1100, 750)
+        # Configuración de la ventana
+        self.setWindowTitle("SISVENIN - Minimarket Villa Carrion")
+        self.setGeometry(100, 100, *self.TAMANO_RECOMENDADO_VENTANA)
+        self.setMinimumSize(*self.TAMANO_MINIMO_VENTANA)
         
-        self.setStyleSheet("""
-            QMainWindow { background-color: #f5f5f5; }
-            QPushButton { font-family: 'Segoe UI', Arial, sans-serif; }
-            QLabel { font-family: 'Segoe UI', Arial, sans-serif; }
-        """)
+        # Cargar fuentes DM Sans
+        self._cargar_fuentes()
         
+        # Configurar fuente por defecto
+        self._configurar_fuente_por_defecto()
+        
+        # Aplicar estilos base
+        self._aplicar_estilos_base()
+        
+        # Widget central
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         
-        self.main_layout = QVBoxLayout(central_widget)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.setSpacing(0)
+        # Layout principal (horizontal: menú + contenido)
+        main_layout = QHBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
         
-        self.modulos = {}
+        # ==================== MENÚ LATERAL IZQUIERDO ====================
+        self._crear_menu_lateral()
+        main_layout.addWidget(self.menu_lateral)
         
-        self._crear_cabecera()
-        self._crear_navegacion()
+        # ==================== ÁREA DE CONTENIDO DERECHA ====================
         self._crear_area_contenido()
-        self._crear_barra_estado()
+        main_layout.addWidget(self.contenido_widget, 1)
         
-        self.btn_salir.clicked.connect(self.close)
+        # Diccionario para almacenar módulos
+        self.modulos: dict = {}
+        self.botones_menu: dict = {}
+        
+        # Timer para actualizar fecha/hora
+        self.timer_fecha = QTimer()
+        self.timer_fecha.timeout.connect(self.actualizar_fecha_hora)
+        self.timer_fecha.start(1000)
+        self.actualizar_fecha_hora()
     
-    def _crear_cabecera(self):
-        cabecera = QWidget()
-        cabecera.setStyleSheet("background-color: #2c3e50; min-height: 100px;")
-        
-        layout = QVBoxLayout(cabecera)
-        layout.setAlignment(Qt.AlignCenter)
-        
-        titulo = QLabel("🏪 SISVENIN")
-        titulo.setAlignment(Qt.AlignCenter)
-        fuente = QFont()
-        fuente.setPointSize(28)
-        fuente.setBold(True)
-        titulo.setFont(fuente)
-        titulo.setStyleSheet("color: white; padding: 10px;")
-        layout.addWidget(titulo)
-        
-        subtitulo = QLabel("Sistema de Ventas e Inventario")
-        subtitulo.setAlignment(Qt.AlignCenter)
-        subtitulo.setStyleSheet("color: #ecf0f1;")
-        layout.addWidget(subtitulo)
-        
-        self.main_layout.addWidget(cabecera)
-    
-    def _crear_navegacion(self):
-        navbar = QWidget()
-        navbar.setStyleSheet("background-color: #34495e; min-height: 50px;")
-        
-        layout = QHBoxLayout(navbar)
-        layout.setContentsMargins(20, 0, 20, 0)
-        
-        estilo = """
-            QPushButton {
-                background-color: transparent;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                font-size: 14px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #2c3e50;
-                border-radius: 5px;
-            }
+    def _cargar_fuentes(self):
         """
+        Carga las fuentes DM Sans desde la carpeta de recursos.
+        Registra las fuentes en Qt para que estén disponibles.
+        """
+        # Buscar la carpeta de fuentes
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         
-        self.btn_productos = QPushButton("📦 Productos")
-        self.btn_productos.setStyleSheet(estilo)
+        posibles_ubicaciones = [
+            os.path.join(base_dir, "src", "app", "fonts"),
+            os.path.join(base_dir, "src", "assets", "fonts"),
+            os.path.join(base_dir, "src", "app", "assets", "fonts"),
+        ]
         
-        self.btn_clientes = QPushButton("👥 Clientes")
-        self.btn_clientes.setStyleSheet(estilo)
-        self.btn_clientes.setEnabled(False)
+        fonts_dir = None
+        for ubicacion in posibles_ubicaciones:
+            if os.path.exists(ubicacion):
+                fonts_dir = ubicacion
+                break
         
-        self.btn_ventas = QPushButton("💰 Ventas")
-        self.btn_ventas.setStyleSheet(estilo)
-        self.btn_ventas.setEnabled(False)
+        if not fonts_dir:
+            print("⚠️ No se encontró la carpeta de fuentes")
+            return
         
-        self.btn_reportes = QPushButton("📊 Reportes")
-        self.btn_reportes.setStyleSheet(estilo)
-        self.btn_reportes.setEnabled(False)
+        # Registrar todas las fuentes .ttf
+        fuentes_registradas = 0
+        for archivo in os.listdir(fonts_dir):
+            if archivo.endswith(".ttf"):
+                ruta_completa = os.path.join(fonts_dir, archivo)
+                font_id = QFontDatabase.addApplicationFont(ruta_completa)
+                if font_id != -1:
+                    fuentes_registradas += 1
         
-        self.btn_config = QPushButton("⚙️ Configuración")
-        self.btn_config.setStyleSheet(estilo)
-        self.btn_config.setEnabled(False)
+        print(f"📦 {fuentes_registradas} fuentes registradas")
         
-        self.botones = {
-            "productos": self.btn_productos,
-            "clientes": self.btn_clientes,
-            "ventas": self.btn_ventas,
-            "reportes": self.btn_reportes,
-            "configuracion": self.btn_config,
-        }
+        # Verificar fuentes disponibles (debug)
+        familias = [f for f in QFontDatabase.families() if "DM Sans" in f or "DMSans" in f]
+        if familias:
+            print(f"🔤 Fuentes DM Sans disponibles: {familias[:3]}...")
+        else:
+            print("⚠️ DM Sans no encontrada, usando fallback")
+    
+    def _configurar_fuente_por_defecto(self):
+        """
+        Configura la fuente por defecto de toda la aplicación.
+        Utiliza DM Sans como fuente principal con fallback Segoe UI.
+        """
+        # Intentar usar DM Sans como fuente principal
+        fuente_base = QFont("DM Sans", self.FUENTE_CUERPO)
+        fuente_base.setWeight(QFont.Normal)
         
-        layout.addWidget(self.btn_productos)
-        layout.addWidget(self.btn_clientes)
-        layout.addWidget(self.btn_ventas)
-        layout.addWidget(self.btn_reportes)
-        layout.addWidget(self.btn_config)
-        layout.addStretch()
+        # Verificar si DM Sans está disponible
+        dm_sans_disponible = any("DM Sans" in f or "DMSans" in f for f in QFontDatabase.families())
         
-        self.btn_salir = QPushButton("🚪 Salir")
-        self.btn_salir.setStyleSheet("""
-            QPushButton {
-                background-color: #e74c3c;
-                color: white;
-                border: none;
-                padding: 8px 20px;
-                border-radius: 5px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #c0392b;
-            }
+        if not dm_sans_disponible:
+            # Fallback a Segoe UI (Windows) o sans-serif
+            print("⚠️ DM Sans no disponible, usando Segoe UI como fallback")
+            fuente_base = QFont("Segoe UI", self.FUENTE_CUERPO)
+            fuente_base.setWeight(QFont.Normal)
+        
+        # Aplicar a toda la aplicación
+        app = QApplication.instance()
+        if app:
+            app.setFont(fuente_base)
+    
+    def _aplicar_estilos_base(self):
+        """
+        Aplica los estilos base a toda la aplicación.
+        Incluye configuración de line-height a través de padding.
+        """
+        self.setStyleSheet(f"""
+            QMainWindow {{
+                background-color: {self.COLOR_FONDO_VENTANA};
+            }}
+            
+            /* Estilo base para QLabel */
+            QLabel {{
+                background-color: transparent;
+            }}
+            
+            /* Scrollbars */
+            QScrollBar:vertical {{
+                background-color: {self.COLOR_FONDO_VENTANA};
+                width: 8px;
+                border-radius: 4px;
+                margin: 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background-color: {self.COLOR_BORDE};
+                border-radius: 4px;
+                min-height: 20px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background-color: {self.COLOR_TEXTO_SECUNDARIO};
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+            
+            /* Estilo para mejorar la legibilidad (line-height simulado) */
+            QAbstractItemView::item {{
+                padding: 8px 4px;
+            }}
         """)
-        layout.addWidget(self.btn_salir)
+    
+    def _crear_menu_lateral(self):
+        """Crea el menú lateral izquierdo"""
+        self.menu_lateral = QWidget()
+        self.menu_lateral.setFixedWidth(self.ANCHO_MENU_LATERAL)
+        self.menu_lateral.setObjectName("menuLateral")
+        self.menu_lateral.setStyleSheet(f"""
+            QWidget#menuLateral {{
+                background-color: {self.COLOR_TARJETA};
+                border-right: 1px solid {self.COLOR_BORDE};
+            }}
+        """)
         
-        self.main_layout.addWidget(navbar)
+        menu_layout = QVBoxLayout(self.menu_lateral)
+        menu_layout.setContentsMargins(0, 0, 0, 0)
+        menu_layout.setSpacing(0)
+        
+        # ==================== LOGO / BRAND ====================
+        logo_widget = QWidget()
+        logo_widget.setStyleSheet("""
+            padding-left: 8px;
+        """)
+        logo_layout = QVBoxLayout(logo_widget)
+        logo_layout.setSpacing(0)
+        
+        self.logo_label = QLabel("🛒 SISVENIN")
+        self.logo_label.setStyleSheet(f"""
+            font-size: {self.FUENTE_SUBTITULO}px;
+            font-weight: {self.PESO_BOLD};
+            color: {self.COLOR_PRIMARIO};
+            margin-top: 16px;
+        """)
+        
+        self.logo_sub = QLabel("Minimarket Villa Carrion")
+        self.logo_sub.setStyleSheet(f"""
+            font-size: 13px;
+            font-weight: 600;
+            color: {self.COLOR_TEXTO_SECUNDARIO};
+            padding-top: 4px;
+            margin-bottom: 16px;
+        """)
+        
+        logo_layout.addWidget(self.logo_label)
+        logo_layout.addWidget(self.logo_sub)
+        menu_layout.addWidget(logo_widget)
+        
+        # ==================== SEPARADOR ====================
+        separador = QWidget()
+        separador.setFixedHeight(1)
+        separador.setStyleSheet(f"""
+            background-color: {self.COLOR_BORDE};
+            margin: 8px 16px;
+        """)
+        menu_layout.addWidget(separador)
+                
+        # ==================== CONTENEDOR DE BOTONES (SCROLL) ====================
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.NoFrame)
+        scroll_area.setStyleSheet("background-color: transparent; border: none;")
+        
+        scroll_content = QWidget()
+        self.menu_scroll_layout = QVBoxLayout(scroll_content)
+        self.menu_scroll_layout.setContentsMargins(0, 8, 0, 8)
+        self.menu_scroll_layout.setSpacing(0)
+        self.menu_scroll_layout.addStretch()
+        
+        scroll_area.setWidget(scroll_content)
+        menu_layout.addWidget(scroll_area, 1)
+    
+    def _estilo_boton_menu(self, activo: bool = False) -> str:
+        """Estilo para botones del menú lateral"""
+        peso_normal = 600
+        peso_activo = 700
+        
+        padding_vertical = 2
+        padding_horizontal = 16
+        
+        if activo:
+            return f"""
+                QPushButton {{
+                    background-color: {self.COLOR_MENU_ACTIVO_BG};
+                    color: {self.COLOR_PRIMARIO};
+                    text-align: left;
+                    padding: {padding_vertical}px {padding_horizontal}px;
+                    border: none;
+                    border-left: 3px solid {self.COLOR_MENU_ACTIVO_BORDER};
+                    font-size: {self.FUENTE_CUERPO}px;
+                    font-weight: {peso_activo};
+                    min-height: 48px;
+                }}
+                /* Eliminar hover para botón activo */
+                QPushButton:hover {{
+                    background-color: {self.COLOR_MENU_ACTIVO_BG};
+                    color: {self.COLOR_PRIMARIO};
+                }}
+            """
+        else:
+            return f"""
+                QPushButton {{
+                    background-color: transparent;
+                    color: {self.COLOR_TEXTO_PRINCIPAL};
+                    text-align: left;
+                    padding: {padding_vertical}px {padding_horizontal}px;
+                    border: none;
+                    font-size: {self.FUENTE_CUERPO}px;
+                    font-weight: {peso_normal};
+                    min-height: 48px;
+                }}
+                QPushButton:hover {{
+                    background-color: {self.COLOR_FONDO_VENTANA};
+                    border-left: 3px solid {self.COLOR_PRIMARIO};
+                }}
+            """
     
     def _crear_area_contenido(self):
-        self.area_contenido = QStackedWidget()
-        self.area_contenido.setStyleSheet("""
-            QStackedWidget {
-                background-color: #f5f5f5;
-                padding: 20px;
-            }
-        """)
-        self.main_layout.addWidget(self.area_contenido)
-    
-    def _crear_barra_estado(self):
-        self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("✅ Sistema listo")
-        self.status_bar.setStyleSheet("""
-            QStatusBar {
-                background-color: #ecf0f1;
-                color: #2c3e50;
-            }
-        """)
-    
-    def registrar_modulo(self, nombre, widget, habilitar_boton=False):
-        """Registra un módulo en el área de contenido"""
-        indice = self.area_contenido.addWidget(widget)
+        """Crea el área de contenido derecha"""
+        self.contenido_widget = QWidget()
+        self.contenido_widget.setStyleSheet(f"background-color: {self.COLOR_FONDO_VENTANA};")
         
-        if nombre in self.botones:
-            self.botones[nombre].clicked.connect(
-                lambda checked, idx=indice, nom=nombre: self._mostrar_modulo(idx, nom)
-            )
-            if habilitar_boton:
-                self.botones[nombre].setEnabled(True)
+        contenido_layout = QVBoxLayout(self.contenido_widget)
+        contenido_layout.setContentsMargins(
+            self.PADDING_GRANDE, self.PADDING_GRANDE,
+            self.PADDING_GRANDE, self.PADDING_GRANDE
+        )
+        contenido_layout.setSpacing(self.MARGEN_ENTRE_SECCIONES)
+        
+        # Cabecera (título + fecha)
+        cabecera_layout = QHBoxLayout()
+        cabecera_layout.setSpacing(16)
+        
+        self.titulo_pantalla = QLabel("Dashboard")
+        self.titulo_pantalla.setStyleSheet(f"""
+            font-size: {self.FUENTE_TITULO}px;
+            font-weight: {self.PESO_BOLD};
+            color: {self.COLOR_TEXTO_PRINCIPAL};
+        """)
+        
+        cabecera_layout.addWidget(self.titulo_pantalla)
+        cabecera_layout.addStretch()
+        
+        self.label_fecha_hora = QLabel("")
+        self.label_fecha_hora.setStyleSheet(f"""
+            font-size: 15px;
+            font-weight: 700;
+            color: {self.COLOR_TEXTO_SECUNDARIO};
+        """)
+        cabecera_layout.addWidget(self.label_fecha_hora)
+        
+        contenido_layout.addLayout(cabecera_layout)
+        
+        # Stacked widget para el contenido
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.setStyleSheet("background-color: transparent;")
+        contenido_layout.addWidget(self.stacked_widget, 1)
+    
+    # ==================== MÉTODOS PÚBLICOS ====================
+    
+    def actualizar_fecha_hora(self):
+        """Actualiza la fecha y hora en la cabecera"""
+        ahora = datetime.now()
+        self.label_fecha_hora.setText(f"Hoy: {ahora.strftime('%d/%m/%Y %H:%M:%S')}")
+    
+    def agregar_modulo_menu(self, nombre: str, texto: str, icono: str = "", habilitar: bool = True, icono_es_svg: bool = False):
+        """
+        Agrega un botón al menú lateral.
+        
+        Args:
+            nombre: Identificador del módulo
+            texto: Texto a mostrar
+            icono: Icono (emoji o ruta a SVG) del botón
+            habilitar: Si el botón está habilitado
+            icono_es_svg: Si es True, icono es una ruta a un archivo SVG
+        """
+        if icono_es_svg and icono and os.path.exists(icono):
+            # Usar QIcon para SVG
+            btn = QPushButton(f" {texto}")  # Espacio antes del texto
+            btn.setIcon(QIcon(icono))
+            btn.setIconSize(QSize(20, 20))
+        else:
+            # Usar emoji
+            texto_boton = f"{icono} {texto}" if icono else texto
+            btn = QPushButton(texto_boton)
+        
+        btn.setCursor(Qt.PointingHandCursor)
+        btn.setStyleSheet(self._estilo_boton_menu(activo=False))
+        btn.setEnabled(habilitar)
+        btn.setMinimumHeight(48)
+        
+        # Guardar el nombre del módulo para comparación (IMPORTANTE)
+        btn.setProperty("module_name", texto)
+        btn.setProperty("module_id", nombre)
+        
+        self.botones_menu[nombre] = btn
+        
+        # Insertar antes del stretch
+        self.menu_scroll_layout.insertWidget(
+            self.menu_scroll_layout.count() - 1, btn
+        )
+        
+        return btn
+    
+    def registrar_modulo(
+        self,
+        nombre: str,
+        widget: QWidget,
+        texto_menu: str,
+        icono: str = "📄",
+        habilitar_boton: bool = True,
+        titulo_pantalla: Optional[str] = None,
+        icono_es_svg: bool = False
+    ) -> int:
+        """
+        Registra un módulo en la aplicación.
+        
+        Args:
+            nombre: Identificador del módulo (ej: "dashboard", "productos")
+            widget: Widget a mostrar
+            texto_menu: Texto del botón en el menú
+            icono: Icono (emoji o ruta a SVG) del botón
+            habilitar_boton: Si el botón está habilitado
+            titulo_pantalla: Título que se muestra en la cabecera (si es None, usa texto_menu)
+            icono_es_svg: Si es True, icono es una ruta a un archivo SVG
+            
+        Returns:
+            int: Índice del módulo
+        """
+        indice = self.stacked_widget.addWidget(widget)
+        btn = self.agregar_modulo_menu(nombre, texto_menu, icono, habilitar_boton, icono_es_svg)
+        
+        titulo = titulo_pantalla if titulo_pantalla else texto_menu
+        
+        # Conectar pasando el NOMBRE del módulo (ID), no el título
+        btn.clicked.connect(lambda checked, idx=indice, nom=nombre: self._mostrar_modulo(idx, nom))
+        
+        self.modulos[nombre] = {
+            "indice": indice,
+            "widget": widget,
+            "boton": btn,
+            "texto_menu": texto_menu,
+            "titulo_pantalla": titulo,
+            "nombre_modulo": nombre  # Guardar también el identificador
+        }
         
         return indice
     
-    def _mostrar_modulo(self, indice, nombre_modulo):
-        self.area_contenido.setCurrentIndex(indice)
-        self.status_bar.showMessage(f"📱 Módulo: {nombre_modulo.capitalize()}")
+    def _mostrar_modulo(self, indice: int, nombre_modulo: str):
+        """
+        Cambia la pantalla mostrada y actualiza el menú.
+        
+        Args:
+            indice: Índice del módulo en el stacked widget
+            nombre_modulo: Identificador del módulo (ej: "dashboard", "productos")
+        """
+        self.stacked_widget.setCurrentIndex(indice)
+        
+        # Obtener el título real del diccionario
+        if nombre_modulo in self.modulos:
+            self.titulo_pantalla.setText(self.modulos[nombre_modulo]["titulo_pantalla"])
+        
+        # Actualizar estilo de los botones usando el ID del módulo
+        for nombre, btn in self.botones_menu.items():
+            es_activo = (nombre == nombre_modulo)
+            btn.setStyleSheet(self._estilo_boton_menu(activo=es_activo))
     
-    def mensaje_estado(self, mensaje):
-        self.status_bar.showMessage(mensaje)
+    def mensaje_estado(self, mensaje: str):
+        """Muestra un mensaje temporal (para depuración)"""
+        print(f"📢 {mensaje}")
+    
+    # ==================== CIERRE DE APLICACIÓN ====================
     
     def closeEvent(self, event):
-        from PySide6.QtWidgets import QMessageBox
+        """Confirma antes de salir"""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("Salir de SISVENIN")
+        msg_box.setText("¿Estás seguro de que deseas salir?")
+        msg_box.setIcon(QMessageBox.Question)
         
-        respuesta = QMessageBox.question(
-            self,
-            "Salir de SISVENIN",
-            "¿Estás seguro de que deseas salir?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
+        # Crear botones personalizados con texto en español
+        btn_si = msg_box.addButton("Sí", QMessageBox.YesRole)
+        btn_no = msg_box.addButton("No", QMessageBox.NoRole)
+        msg_box.setDefaultButton(btn_no)
         
-        if respuesta == QMessageBox.Yes:
+        # Aplicar estilos a los botones
+        msg_box.setStyleSheet(f"""
+            QMessageBox {{
+                background-color: {self.COLOR_TARJETA};
+                border-radius: {self.BORDER_RADIUS_MODAL}px;
+            }}
+            QMessageBox QLabel {{
+                color: {self.COLOR_TEXTO_PRINCIPAL};
+                font-size: 14px;
+                font-weight: {self.PESO_NORMAL};
+            }}
+            QPushButton {{
+                min-width: 80px;
+                padding: 8px 16px;
+                border-radius: {self.BORDER_RADIUS_BOTON}px;
+                font-weight: {self.PESO_SEMIBOLD};
+                font-size: 14px;
+            }}
+        """)
+        
+        # Estilo específico para el botón "Sí" (rojo)
+        btn_si.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.COLOR_PELIGRO};
+                color: white;
+                border: none;
+            }}
+            QPushButton:hover {{
+                background-color: {self.COLOR_PELIGRO_HOVER};
+            }}
+        """)
+        
+        # Estilo específico para el botón "No" (secundario)
+        btn_no.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                color: {self.COLOR_TEXTO_PRINCIPAL};
+                border: 1px solid {self.COLOR_BORDE};
+            }}
+            QPushButton:hover {{
+                background-color: {self.COLOR_FONDO_VENTANA};
+            }}
+        """)
+        
+        respuesta = msg_box.exec()
+        
+        if msg_box.clickedButton() == btn_si:
             event.accept()
         else:
             event.ignore()

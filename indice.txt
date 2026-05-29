@@ -1,32 +1,165 @@
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\.github
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\.gitignore
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\database
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\delModu.bat
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\delModu.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\indice.txt
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\newModu.bat
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\newModu.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\README.md
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\requirements.txt
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\run.bat
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\setup.bat
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\test.bat
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\tests
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\venv
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\.github\pull_request_template.md
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\.pytest_cache\README.md
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\database\.gitkeep
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\database\sisvenin.db
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\main.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\app.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\base_layout.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\controllers
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\models
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\views
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\controllers\producto_controlador.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\models\producto_modelo.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\src\app\views\producto_vista.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\tests\conftest.py
-D:\02. Proyectos\Proyectos Desktop\SISVENIN\tests\test_producto.py
+.github/pull_request_template.md
+.gitignore
+DB.erwin
+README.md
+database/.gitkeep
+database/init_db.py
+database/schema.sql
+delModu.bat
+delModu.py
+figma/arg.txt
+figma/prompt1.txt
+figma/prompt2.txt
+figma/prompt3.txt
+figma/prompt4.txt
+figma/prompt5.txt
+figma/prompt6.txt
+figma/prompt7.txt
+indice.txt
+newModu.bat
+newModu.py
+requirements.txt
+run.bat
+setup.bat
+src/app/app.py
+src/app/assets/fonts/DMSans-Black.ttf
+src/app/assets/fonts/DMSans-BlackItalic.ttf
+src/app/assets/fonts/DMSans-Bold.ttf
+src/app/assets/fonts/DMSans-BoldItalic.ttf
+src/app/assets/fonts/DMSans-ExtraBold.ttf
+src/app/assets/fonts/DMSans-ExtraBoldItalic.ttf
+src/app/assets/fonts/DMSans-ExtraLight.ttf
+src/app/assets/fonts/DMSans-ExtraLightItalic.ttf
+src/app/assets/fonts/DMSans-Italic.ttf
+src/app/assets/fonts/DMSans-Light.ttf
+src/app/assets/fonts/DMSans-LightItalic.ttf
+src/app/assets/fonts/DMSans-Medium.ttf
+src/app/assets/fonts/DMSans-MediumItalic.ttf
+src/app/assets/fonts/DMSans-Regular.ttf
+src/app/assets/fonts/DMSans-SemiBold.ttf
+src/app/assets/fonts/DMSans-SemiBoldItalic.ttf
+src/app/assets/fonts/DMSans-Thin.ttf
+src/app/assets/fonts/DMSans-ThinItalic.ttf
+src/app/assets/fonts/DMSans_18pt-Black.ttf
+src/app/assets/fonts/DMSans_18pt-BlackItalic.ttf
+src/app/assets/fonts/DMSans_18pt-Bold.ttf
+src/app/assets/fonts/DMSans_18pt-BoldItalic.ttf
+src/app/assets/fonts/DMSans_18pt-ExtraBold.ttf
+src/app/assets/fonts/DMSans_18pt-ExtraBoldItalic.ttf
+src/app/assets/fonts/DMSans_18pt-ExtraLight.ttf
+src/app/assets/fonts/DMSans_18pt-ExtraLightItalic.ttf
+src/app/assets/fonts/DMSans_18pt-Italic.ttf
+src/app/assets/fonts/DMSans_18pt-Light.ttf
+src/app/assets/fonts/DMSans_18pt-LightItalic.ttf
+src/app/assets/fonts/DMSans_18pt-Medium.ttf
+src/app/assets/fonts/DMSans_18pt-MediumItalic.ttf
+src/app/assets/fonts/DMSans_18pt-Regular.ttf
+src/app/assets/fonts/DMSans_18pt-SemiBold.ttf
+src/app/assets/fonts/DMSans_18pt-SemiBoldItalic.ttf
+src/app/assets/fonts/DMSans_18pt-Thin.ttf
+src/app/assets/fonts/DMSans_18pt-ThinItalic.ttf
+src/app/assets/fonts/DMSans_24pt-Black.ttf
+src/app/assets/fonts/DMSans_24pt-BlackItalic.ttf
+src/app/assets/fonts/DMSans_24pt-Bold.ttf
+src/app/assets/fonts/DMSans_24pt-BoldItalic.ttf
+src/app/assets/fonts/DMSans_24pt-ExtraBold.ttf
+src/app/assets/fonts/DMSans_24pt-ExtraBoldItalic.ttf
+src/app/assets/fonts/DMSans_24pt-ExtraLight.ttf
+src/app/assets/fonts/DMSans_24pt-ExtraLightItalic.ttf
+src/app/assets/fonts/DMSans_24pt-Italic.ttf
+src/app/assets/fonts/DMSans_24pt-Light.ttf
+src/app/assets/fonts/DMSans_24pt-LightItalic.ttf
+src/app/assets/fonts/DMSans_24pt-Medium.ttf
+src/app/assets/fonts/DMSans_24pt-MediumItalic.ttf
+src/app/assets/fonts/DMSans_24pt-Regular.ttf
+src/app/assets/fonts/DMSans_24pt-SemiBold.ttf
+src/app/assets/fonts/DMSans_24pt-SemiBoldItalic.ttf
+src/app/assets/fonts/DMSans_24pt-Thin.ttf
+src/app/assets/fonts/DMSans_24pt-ThinItalic.ttf
+src/app/assets/fonts/DMSans_36pt-Black.ttf
+src/app/assets/fonts/DMSans_36pt-BlackItalic.ttf
+src/app/assets/fonts/DMSans_36pt-Bold.ttf
+src/app/assets/fonts/DMSans_36pt-BoldItalic.ttf
+src/app/assets/fonts/DMSans_36pt-ExtraBold.ttf
+src/app/assets/fonts/DMSans_36pt-ExtraBoldItalic.ttf
+src/app/assets/fonts/DMSans_36pt-ExtraLight.ttf
+src/app/assets/fonts/DMSans_36pt-ExtraLightItalic.ttf
+src/app/assets/fonts/DMSans_36pt-Italic.ttf
+src/app/assets/fonts/DMSans_36pt-Light.ttf
+src/app/assets/fonts/DMSans_36pt-LightItalic.ttf
+src/app/assets/fonts/DMSans_36pt-Medium.ttf
+src/app/assets/fonts/DMSans_36pt-MediumItalic.ttf
+src/app/assets/fonts/DMSans_36pt-Regular.ttf
+src/app/assets/fonts/DMSans_36pt-SemiBold.ttf
+src/app/assets/fonts/DMSans_36pt-SemiBoldItalic.ttf
+src/app/assets/fonts/DMSans_36pt-Thin.ttf
+src/app/assets/fonts/DMSans_36pt-ThinItalic.ttf
+src/app/assets/icons/dashboard.svg
+src/app/assets/icons/producto.svg
+src/app/assets/icons/reporte.svg
+src/app/assets/icons/velocidad.svg
+src/app/assets/icons/venta.svg
+src/app/base_layout.py
+src/app/controllers/dashboard_controlador.py
+src/app/controllers/producto_controlador.py
+src/app/controllers/reporte_controlador.py
+src/app/controllers/velocidad_controlador.py
+src/app/controllers/venta_controlador.py
+src/app/models/dashboard_modelo.py
+src/app/models/producto_modelo.py
+src/app/models/reporte_modelo.py
+src/app/models/velocidad_modelo.py
+src/app/models/venta_detalle_modelo.py
+src/app/models/venta_modelo.py
+src/app/shared/components/__init__.py
+src/app/shared/components/sis_alert.py
+src/app/shared/components/sis_button.py
+src/app/shared/components/sis_card.py
+src/app/shared/components/sis_input.py
+src/app/shared/components/sis_modal.py
+src/app/shared/components/sis_pagination.py
+src/app/shared/components/sis_select.py
+src/app/shared/components/sis_table.py
+src/app/utils/__init__.py
+src/app/utils/helpers.py
+src/app/utils/impresora.py
+src/app/utils/pdf_generador.py
+src/app/views/dashboard/__init__.py
+src/app/views/dashboard/componentes/__init__.py
+src/app/views/dashboard/componentes/lista_alertas.py
+src/app/views/dashboard/componentes/tarjeta_ganancia.py
+src/app/views/dashboard/dashboard_vista.py
+src/app/views/producto/__init__.py
+src/app/views/producto/components/__init__.py
+src/app/views/producto/components/barra_busqueda.py
+src/app/views/producto/components/formulario_producto.py
+src/app/views/producto/components/tabla_productos.py
+src/app/views/producto/producto_vista.py
+src/app/views/reporte/__init__.py
+src/app/views/reporte/components/__init__.py
+src/app/views/reporte/components/resumen_dia.py
+src/app/views/reporte/components/tabla_productos_vendidos.py
+src/app/views/reporte/reporte_vista.py
+src/app/views/velocidad/__init__.py
+src/app/views/velocidad/velocidad_vista.py
+src/app/views/venta/__init__.py
+src/app/views/venta/components/__init__.py
+src/app/views/venta/components/calculadora_vuelto.py
+src/app/views/venta/components/panel_busqueda.py
+src/app/views/venta/components/tabla_carrito.py
+src/app/views/venta/components/ticket_modal.py
+src/app/views/venta/venta_vista.py
+src/main.py
+test.bat
+tests/conftest.py
+tests/dashboard/test_dashboard_controlador.py
+tests/dashboard/test_dashboard_modelo.py
+tests/producto/test_producto_controlador.py
+tests/producto/test_producto_modelo.py
+tests/reporte/test_reporte_controlador.py
+tests/reporte/test_reporte_modelo.py
+tests/velocidad/test_velocidad_controlador.py
+tests/velocidad/test_velocidad_modelo.py
+tests/venta/test_venta_controlador.py
+tests/venta/test_venta_modelo.py
+tests/venta_detalle/test_venta_detalle_modelo.py

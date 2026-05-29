@@ -1,0 +1,22 @@
+Fase 1: Componentes compartidos (shared/components/)
+sis_button.py
+
+sis_card.py
+
+sis_input.py
+
+sis_modal.py
+
+sis_alert.py
+
+Fase 2: Componentes específicos de producto
+views/producto/components/barra_busqueda.py
+
+views/producto/components/tabla_productos.py
+
+views/producto/components/formulario_producto.py
+
+Fase 3: Vista principal
+views/producto/producto_vista.py (orquesta todo)
+
+Fase 4: Actualizar app.py
