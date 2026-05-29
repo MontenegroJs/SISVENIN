@@ -23,17 +23,17 @@ class App(BaseLayout):
         self.registrar_modulo(
             nombre="productos",
             widget=self.vista_productos,
-            texto_menu="Productos",
+            texto_menu="   Productos",
             icono="📦"
         )
         
         # Placeholders para módulos futuros (deshabilitados)
-        self._registrar_modulo_placeholder("dashboard", "Dashboard", "🏠", habilitado=False)
-        self._registrar_modulo_placeholder("pos", "POS", "🛒", habilitado=False)
-        self._registrar_modulo_placeholder("reporte", "Reporte del día", "📄", habilitado=False)
-        self._registrar_modulo_placeholder("velocidad", "Prueba velocidad", "⏱️", habilitado=False)
-        self._registrar_modulo_placeholder("ventas", "Ventas", "💰", habilitado=False)
-        self._registrar_modulo_placeholder("configuracion", "Configuración", "⚙️", habilitado=False)
+        self._registrar_modulo_placeholder("dashboard", "   Dashboard", "🏠", habilitado=False)
+        self._registrar_modulo_placeholder("pos", "   POS", "🛒", habilitado=False)
+        self._registrar_modulo_placeholder("reporte", "   Reporte del día", "📄", habilitado=False)
+        self._registrar_modulo_placeholder("velocidad", "   Prueba velocidad", "⏱️", habilitado=False)
+        self._registrar_modulo_placeholder("ventas", "   Ventas", "💰", habilitado=False)
+        self._registrar_modulo_placeholder("configuracion", "   Configuración", "⚙️", habilitado=False)
     
     def _registrar_modulo_placeholder(self, nombre, texto_menu, icono, habilitado=False):
         """Registra un módulo placeholder para funcionalidades futuras"""

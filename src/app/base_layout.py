@@ -4,7 +4,7 @@ Diseño basado completamente en el Prompt 0 (Sistema de Diseño) de Figma SISVEN
 
 Especificaciones aplicadas:
 - Paleta de colores: Verde #2E7D32, Rojo #D32F2F, Fondo #F5F5F5
-- Tipografía: Roboto (con fallback Segoe UI, sans-serif)
+- Tipografía: DM Sans (con fallback Segoe UI, sans-serif)
 - Espaciado: Sistema octal (múltiplos de 8px)
 - Line-height: 1.4 para legibilidad
 """
@@ -15,10 +15,10 @@ from typing import Optional, Callable, List, Any
 
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QStackedWidget, QStatusBar, QFrame, QScrollArea,
+    QLabel, QStackedWidget, QFrame, QScrollArea,
     QPushButton, QMessageBox, QApplication
 )
-from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont, QFontDatabase, QColor
 
 
@@ -58,9 +58,9 @@ class BaseLayout(QMainWindow):
     COLOR_MENU_ACTIVO_BORDER = "#2E7D32"
     
     # Tamaños de fuente (en píxeles)
-    FUENTE_TITULO = 24
-    FUENTE_SUBTITULO = 18
-    FUENTE_CUERPO = 14
+    FUENTE_TITULO = 30
+    FUENTE_SUBTITULO = 20
+    FUENTE_CUERPO = 17
     FUENTE_BOTON = 16
     FUENTE_TOTAL_POS = 32
     FUENTE_VUELTO_POS = 48
@@ -86,7 +86,7 @@ class BaseLayout(QMainWindow):
     BORDER_RADIUS_INPUT = 8
     
     # Dimensiones
-    ANCHO_MENU_LATERAL = 240
+    ANCHO_MENU_LATERAL = 270
     TAMANO_MINIMO_VENTANA = (1024, 600)
     TAMANO_RECOMENDADO_VENTANA = (1280, 720)
     
@@ -98,7 +98,7 @@ class BaseLayout(QMainWindow):
         self.setGeometry(100, 100, *self.TAMANO_RECOMENDADO_VENTANA)
         self.setMinimumSize(*self.TAMANO_MINIMO_VENTANA)
         
-        # Cargar fuentes Roboto
+        # Cargar fuentes DM Sans
         self._cargar_fuentes()
         
         # Configurar fuente por defecto
@@ -124,9 +124,6 @@ class BaseLayout(QMainWindow):
         self._crear_area_contenido()
         main_layout.addWidget(self.contenido_widget, 1)
         
-        # ==================== BARRA DE ESTADO ====================
-        self._crear_barra_estado()
-        
         # Diccionario para almacenar módulos
         self.modulos: dict = {}
         self.botones_menu: dict = {}
@@ -139,7 +136,7 @@ class BaseLayout(QMainWindow):
     
     def _cargar_fuentes(self):
         """
-        Carga las fuentes Roboto desde la carpeta de recursos.
+        Carga las fuentes DM Sans desde la carpeta de recursos.
         Registra las fuentes en Qt para que estén disponibles.
         """
         # Buscar la carpeta de fuentes
@@ -158,7 +155,7 @@ class BaseLayout(QMainWindow):
                 break
         
         if not fonts_dir:
-            print("⚠️ No se encontró la carpeta de fuentes Roboto")
+            print("⚠️ No se encontró la carpeta de fuentes")
             return
         
         # Registrar todas las fuentes .ttf
@@ -170,26 +167,30 @@ class BaseLayout(QMainWindow):
                 if font_id != -1:
                     fuentes_registradas += 1
         
-        print(f"📦 {fuentes_registradas} fuentes Roboto registradas")
+        print(f"📦 {fuentes_registradas} fuentes registradas")
         
         # Verificar fuentes disponibles (debug)
-        familias_roboto = [f for f in QFontDatabase.families() if "Roboto" in f]
-        if familias_roboto:
-            print(f"🔤 Fuentes Roboto disponibles: {familias_roboto[:3]}...")
+        familias = [f for f in QFontDatabase.families() if "DM Sans" in f or "DMSans" in f]
+        if familias:
+            print(f"🔤 Fuentes DM Sans disponibles: {familias[:3]}...")
+        else:
+            print("⚠️ DM Sans no encontrada, usando fallback")
     
     def _configurar_fuente_por_defecto(self):
         """
         Configura la fuente por defecto de toda la aplicación.
-        Replica el comportamiento de React: Roboto con fallback Segoe UI.
+        Utiliza DM Sans como fuente principal con fallback Segoe UI.
         """
-        # Intentar usar Roboto como fuente principal
-        fuente_base = QFont("Roboto", self.FUENTE_CUERPO)
-        fuente_base.setWeight(QFont.Normal)  # Usar constante de Qt
+        # Intentar usar DM Sans como fuente principal
+        fuente_base = QFont("DM Sans", self.FUENTE_CUERPO)
+        fuente_base.setWeight(QFont.Normal)
         
-        # Verificar si Roboto está disponible
-        if "Roboto" not in QFontDatabase.families():
+        # Verificar si DM Sans está disponible
+        dm_sans_disponible = any("DM Sans" in f or "DMSans" in f for f in QFontDatabase.families())
+        
+        if not dm_sans_disponible:
             # Fallback a Segoe UI (Windows) o sans-serif
-            print("⚠️ Roboto no disponible, usando Segoe UI como fallback")
+            print("⚠️ DM Sans no disponible, usando Segoe UI como fallback")
             fuente_base = QFont("Segoe UI", self.FUENTE_CUERPO)
             fuente_base.setWeight(QFont.Normal)
         
@@ -197,9 +198,6 @@ class BaseLayout(QMainWindow):
         app = QApplication.instance()
         if app:
             app.setFont(fuente_base)
-        
-        # Configurar fuente para labels específicos (line-height se maneja en CSS)
-        # Qt no soporta line-height directamente, se maneja con padding/margins
     
     def _aplicar_estilos_base(self):
         """
@@ -211,7 +209,7 @@ class BaseLayout(QMainWindow):
                 background-color: {self.COLOR_FONDO_VENTANA};
             }}
             
-            /* Estilo base para QLabel con line-height simulado */
+            /* Estilo base para QLabel */
             QLabel {{
                 background-color: transparent;
             }}
@@ -259,31 +257,42 @@ class BaseLayout(QMainWindow):
         
         # ==================== LOGO / BRAND ====================
         logo_widget = QWidget()
-        logo_widget.setStyleSheet(f"""
-            border-bottom: 1px solid {self.COLOR_BORDE};
-            padding: 16px 20px;
+        logo_widget.setStyleSheet("""
+            padding-left: 8px;
         """)
         logo_layout = QVBoxLayout(logo_widget)
-        logo_layout.setSpacing(4)
+        logo_layout.setSpacing(0)
         
         self.logo_label = QLabel("🛒 SISVENIN")
         self.logo_label.setStyleSheet(f"""
             font-size: {self.FUENTE_SUBTITULO}px;
             font-weight: {self.PESO_BOLD};
             color: {self.COLOR_PRIMARIO};
+            margin-top: 16px;
         """)
         
         self.logo_sub = QLabel("Minimarket Villa Carrion")
         self.logo_sub.setStyleSheet(f"""
-            font-size: 12px;
-            font-weight: {self.PESO_NORMAL};
+            font-size: 13px;
+            font-weight: 600;
             color: {self.COLOR_TEXTO_SECUNDARIO};
+            padding-top: 4px;
+            margin-bottom: 16px;
         """)
         
         logo_layout.addWidget(self.logo_label)
         logo_layout.addWidget(self.logo_sub)
         menu_layout.addWidget(logo_widget)
         
+        # ==================== SEPARADOR ====================
+        separador = QWidget()
+        separador.setFixedHeight(1)
+        separador.setStyleSheet(f"""
+            background-color: {self.COLOR_BORDE};
+            margin: 8px 16px;
+        """)
+        menu_layout.addWidget(separador)
+                
         # ==================== CONTENEDOR DE BOTONES (SCROLL) ====================
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -298,59 +307,44 @@ class BaseLayout(QMainWindow):
         
         scroll_area.setWidget(scroll_content)
         menu_layout.addWidget(scroll_area, 1)
-        
-        # ==================== FOOTER DEL MENÚ ====================
-        footer_widget = QWidget()
-        footer_widget.setStyleSheet(f"""
-            border-top: 1px solid {self.COLOR_BORDE};
-            padding: 16px 20px;
-        """)
-        footer_layout = QVBoxLayout(footer_widget)
-        
-        self.version_label = QLabel("Sistema de Diseño v1.0")
-        self.version_label.setStyleSheet(f"""
-            font-size: 12px;
-            font-weight: {self.PESO_NORMAL};
-            color: {self.COLOR_TEXTO_SECUNDARIO};
-        """)
-        footer_layout.addWidget(self.version_label)
-        
-        menu_layout.addWidget(footer_widget)
     
     def _estilo_boton_menu(self, activo: bool = False) -> str:
         """Estilo para botones del menú lateral"""
-        # Usar valores numéricos en CSS
-        peso_normal = 400
-        peso_medium = 500
+        peso_normal = 600
+        peso_activo = 700
+        
+        padding_vertical = 2
+        padding_horizontal = 16
+        
+        # Estilo base común para ambos estados
+        base_style = f"""
+            QPushButton {{
+                text-align: left;
+                padding: {padding_vertical}px {padding_horizontal}px;
+                border: none;
+                font-size: {self.FUENTE_CUERPO}px;
+                min-height: 48px;
+            }}
+        """
         
         if activo:
-            return f"""
+            return base_style + f"""
                 QPushButton {{
                     background-color: {self.COLOR_MENU_ACTIVO_BG};
                     color: {self.COLOR_PRIMARIO};
-                    text-align: left;
-                    padding: 12px 20px;
-                    border: none;
                     border-left: 3px solid {self.COLOR_MENU_ACTIVO_BORDER};
-                    font-size: {self.FUENTE_CUERPO}px;
-                    font-weight: {peso_medium};
-                    min-height: 48px;
+                    font-weight: {peso_activo};
                 }}
                 QPushButton:hover {{
                     background-color: #C8E6C9;
                 }}
             """
         else:
-            return f"""
+            return base_style + f"""
                 QPushButton {{
                     background-color: transparent;
                     color: {self.COLOR_TEXTO_PRINCIPAL};
-                    text-align: left;
-                    padding: 12px 20px;
-                    border: none;
-                    font-size: {self.FUENTE_CUERPO}px;
                     font-weight: {peso_normal};
-                    min-height: 48px;
                 }}
                 QPushButton:hover {{
                     background-color: {self.COLOR_FONDO_VENTANA};
@@ -386,8 +380,8 @@ class BaseLayout(QMainWindow):
         
         self.label_fecha_hora = QLabel("")
         self.label_fecha_hora.setStyleSheet(f"""
-            font-size: {self.FUENTE_CUERPO}px;
-            font-weight: {self.PESO_NORMAL};
+            font-size: 15px;
+            font-weight: 700;
             color: {self.COLOR_TEXTO_SECUNDARIO};
         """)
         cabecera_layout.addWidget(self.label_fecha_hora)
@@ -398,22 +392,6 @@ class BaseLayout(QMainWindow):
         self.stacked_widget = QStackedWidget()
         self.stacked_widget.setStyleSheet("background-color: transparent;")
         contenido_layout.addWidget(self.stacked_widget, 1)
-    
-    def _crear_barra_estado(self):
-        """Crea la barra de estado inferior"""
-        self.status_bar = QStatusBar()
-        self.setStatusBar(self.status_bar)
-        self.status_bar.setStyleSheet(f"""
-            QStatusBar {{
-                background-color: {self.COLOR_TARJETA};
-                color: {self.COLOR_TEXTO_SECUNDARIO};
-                border-top: 1px solid {self.COLOR_BORDE};
-                padding: 4px 16px;
-                font-size: 13px;
-                font-weight: {self.PESO_NORMAL};
-            }}
-        """)
-        self.status_bar.showMessage("✅ Sistema listo")
     
     # ==================== MÉTODOS PÚBLICOS ====================
     
@@ -487,22 +465,17 @@ class BaseLayout(QMainWindow):
         """Cambia la pantalla mostrada y actualiza el menú"""
         self.stacked_widget.setCurrentIndex(indice)
         self.titulo_pantalla.setText(nombre_modulo)
-        self.status_bar.showMessage(f"📱 Módulo: {nombre_modulo}")
         
         # Actualizar estilo de los botones
-        for btn in self.botones_menu.values():
-            btn.setStyleSheet(self._estilo_boton_menu(activo=False))
-        
-        # Marcar el botón activo
-        for btn in self.botones_menu.values():
+        for nombre, btn in self.botones_menu.items():
+            # Verificar si este botón es el activo
             texto_btn = btn.text().split(" ", 1)[-1] if " " in btn.text() else btn.text()
-            if texto_btn == nombre_modulo:
-                btn.setStyleSheet(self._estilo_boton_menu(activo=True))
-                break
+            es_activo = (texto_btn == nombre_modulo)
+            btn.setStyleSheet(self._estilo_boton_menu(activo=es_activo))
     
     def mensaje_estado(self, mensaje: str):
-        """Muestra un mensaje en la barra de estado"""
-        self.status_bar.showMessage(mensaje)
+        """Muestra un mensaje temporal (para depuración)"""
+        print(f"📢 {mensaje}")
     
     # ==================== CIERRE DE APLICACIÓN ====================
     
