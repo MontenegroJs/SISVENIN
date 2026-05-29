@@ -18,20 +18,21 @@ class App(BaseLayout):
         super().__init__()
         self._registrar_modulos()
         # Mostrar Dashboard por defecto
-        self._mostrar_modulo_por_nombre("dashboard")
+        self._mostrar_modulo_por_nombre("productos")
     
     def _obtener_ruta_icono(self, nombre_icono: str) -> str:
         """
         Obtiene la ruta absoluta de un icono SVG.
         
         Args:
-            nombre_icono: Nombre del archivo (ej: 'menu_dashboard.svg')
+            nombre_icono: Nombre del archivo (ej: 'dashboard.svg')
         
         Returns:
             str: Ruta absoluta al icono
         """
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        return os.path.join(base_dir, "src", "assets", "icons", nombre_icono)
+        # CORREGIDO: La ruta correcta es src/app/assets/icons/
+        return os.path.join(base_dir, "src", "app", "assets", "icons", nombre_icono)
     
     def _registrar_modulos(self):
         """Registra todos los módulos de la aplicación"""
@@ -43,10 +44,10 @@ class App(BaseLayout):
         self.registrar_modulo(
             nombre="dashboard",
             widget=self.vista_dashboard,
-            texto_menu="Dashboard",
+            texto_menu="   Dashboard",
             icono=self._obtener_ruta_icono("menu_dashboard.svg"),
             icono_es_svg=True,
-            titulo_pantalla="Dashboard"
+            titulo_pantalla="📊 Dashboard"
         )
         
         # Módulo POS
@@ -57,10 +58,10 @@ class App(BaseLayout):
         self.registrar_modulo(
             nombre="pos",
             widget=self.vista_pos,
-            texto_menu="POS",
+            texto_menu="   POS",
             icono=self._obtener_ruta_icono("menu_venta.svg"),
             icono_es_svg=True,
-            titulo_pantalla="Punto de Venta"
+            titulo_pantalla="🛒 Punto de Venta"
         )
         
         # Módulo Productos
@@ -68,10 +69,10 @@ class App(BaseLayout):
         self.registrar_modulo(
             nombre="productos",
             widget=self.vista_productos,
-            texto_menu="Productos",
+            texto_menu="   Productos",
             icono=self._obtener_ruta_icono("menu_producto.svg"),
             icono_es_svg=True,
-            titulo_pantalla="Gestión de Productos"
+            titulo_pantalla="📦 Gestión de Productos"
         )
         
         # Módulo Reporte
@@ -79,10 +80,10 @@ class App(BaseLayout):
         self.registrar_modulo(
             nombre="reporte",
             widget=self.vista_reporte,
-            texto_menu="Reporte del día",
+            texto_menu="   Reporte del día",
             icono=self._obtener_ruta_icono("menu_reporte.svg"),
             icono_es_svg=True,
-            titulo_pantalla="Reporte del Día"
+            titulo_pantalla="📄 Reporte del Día"
         )
         
         # Módulo Prueba velocidad
@@ -90,10 +91,10 @@ class App(BaseLayout):
         self.registrar_modulo(
             nombre="velocidad",
             widget=self.vista_velocidad,
-            texto_menu="Prueba velocidad",
+            texto_menu="   Prueba velocidad",
             icono=self._obtener_ruta_icono("menu_velocidad.svg"),
             icono_es_svg=True,
-            titulo_pantalla="Prueba de Velocidad"
+            titulo_pantalla="⏱️ Prueba de Velocidad"
         )
     
     # ==================== MÉTODOS DE NAVEGACIÓN ====================

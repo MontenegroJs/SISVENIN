@@ -316,35 +316,36 @@ class BaseLayout(QMainWindow):
         padding_vertical = 2
         padding_horizontal = 16
         
-        # Estilo base común para ambos estados
-        base_style = f"""
-            QPushButton {{
-                text-align: left;
-                padding: {padding_vertical}px {padding_horizontal}px;
-                border: none;
-                font-size: {self.FUENTE_CUERPO}px;
-                min-height: 48px;
-            }}
-        """
-        
         if activo:
-            return base_style + f"""
+            return f"""
                 QPushButton {{
                     background-color: {self.COLOR_MENU_ACTIVO_BG};
                     color: {self.COLOR_PRIMARIO};
+                    text-align: left;
+                    padding: {padding_vertical}px {padding_horizontal}px;
+                    border: none;
                     border-left: 3px solid {self.COLOR_MENU_ACTIVO_BORDER};
+                    font-size: {self.FUENTE_CUERPO}px;
                     font-weight: {peso_activo};
+                    min-height: 48px;
                 }}
+                /* Eliminar hover para botón activo */
                 QPushButton:hover {{
-                    background-color: #C8E6C9;
+                    background-color: {self.COLOR_MENU_ACTIVO_BG};
+                    color: {self.COLOR_PRIMARIO};
                 }}
             """
         else:
-            return base_style + f"""
+            return f"""
                 QPushButton {{
                     background-color: transparent;
                     color: {self.COLOR_TEXTO_PRINCIPAL};
+                    text-align: left;
+                    padding: {padding_vertical}px {padding_horizontal}px;
+                    border: none;
+                    font-size: {self.FUENTE_CUERPO}px;
                     font-weight: {peso_normal};
+                    min-height: 48px;
                 }}
                 QPushButton:hover {{
                     background-color: {self.COLOR_FONDO_VENTANA};
@@ -426,6 +427,10 @@ class BaseLayout(QMainWindow):
         btn.setEnabled(habilitar)
         btn.setMinimumHeight(48)
         
+        # Guardar el nombre del módulo para comparación (IMPORTANTE)
+        btn.setProperty("module_name", texto)
+        btn.setProperty("module_id", nombre)
+        
         self.botones_menu[nombre] = btn
         
         # Insertar antes del stretch
@@ -443,13 +448,13 @@ class BaseLayout(QMainWindow):
         icono: str = "📄",
         habilitar_boton: bool = True,
         titulo_pantalla: Optional[str] = None,
-        icono_es_svg: bool = False  # ← NUEVO PARÁMETRO
+        icono_es_svg: bool = False
     ) -> int:
         """
         Registra un módulo en la aplicación.
         
         Args:
-            nombre: Identificador del módulo
+            nombre: Identificador del módulo (ej: "dashboard", "productos")
             widget: Widget a mostrar
             texto_menu: Texto del botón en el menú
             icono: Icono (emoji o ruta a SVG) del botón
@@ -463,31 +468,39 @@ class BaseLayout(QMainWindow):
         indice = self.stacked_widget.addWidget(widget)
         btn = self.agregar_modulo_menu(nombre, texto_menu, icono, habilitar_boton, icono_es_svg)
         
-        # Usar titulo_pantalla si se proporciona, si no usar texto_menu
         titulo = titulo_pantalla if titulo_pantalla else texto_menu
         
-        btn.clicked.connect(lambda checked, idx=indice, nom=titulo: self._mostrar_modulo(idx, nom))
+        # Conectar pasando el NOMBRE del módulo (ID), no el título
+        btn.clicked.connect(lambda checked, idx=indice, nom=nombre: self._mostrar_modulo(idx, nom))
         
         self.modulos[nombre] = {
             "indice": indice,
             "widget": widget,
             "boton": btn,
             "texto_menu": texto_menu,
-            "titulo_pantalla": titulo
+            "titulo_pantalla": titulo,
+            "nombre_modulo": nombre  # Guardar también el identificador
         }
         
         return indice
     
     def _mostrar_modulo(self, indice: int, nombre_modulo: str):
-        """Cambia la pantalla mostrada y actualiza el menú"""
-        self.stacked_widget.setCurrentIndex(indice)
-        self.titulo_pantalla.setText(nombre_modulo)
+        """
+        Cambia la pantalla mostrada y actualiza el menú.
         
-        # Actualizar estilo de los botones
+        Args:
+            indice: Índice del módulo en el stacked widget
+            nombre_modulo: Identificador del módulo (ej: "dashboard", "productos")
+        """
+        self.stacked_widget.setCurrentIndex(indice)
+        
+        # Obtener el título real del diccionario
+        if nombre_modulo in self.modulos:
+            self.titulo_pantalla.setText(self.modulos[nombre_modulo]["titulo_pantalla"])
+        
+        # Actualizar estilo de los botones usando el ID del módulo
         for nombre, btn in self.botones_menu.items():
-            # Verificar si este botón es el activo
-            texto_btn = btn.text().split(" ", 1)[-1] if " " in btn.text() else btn.text()
-            es_activo = (texto_btn == nombre_modulo)
+            es_activo = (nombre == nombre_modulo)
             btn.setStyleSheet(self._estilo_boton_menu(activo=es_activo))
     
     def mensaje_estado(self, mensaje: str):
@@ -502,9 +515,13 @@ class BaseLayout(QMainWindow):
         msg_box.setWindowTitle("Salir de SISVENIN")
         msg_box.setText("¿Estás seguro de que deseas salir?")
         msg_box.setIcon(QMessageBox.Question)
-        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        msg_box.setDefaultButton(QMessageBox.No)
         
+        # Crear botones personalizados con texto en español
+        btn_si = msg_box.addButton("Sí", QMessageBox.YesRole)
+        btn_no = msg_box.addButton("No", QMessageBox.NoRole)
+        msg_box.setDefaultButton(btn_no)
+        
+        # Aplicar estilos a los botones
         msg_box.setStyleSheet(f"""
             QMessageBox {{
                 background-color: {self.COLOR_TARJETA};
@@ -520,26 +537,37 @@ class BaseLayout(QMainWindow):
                 padding: 8px 16px;
                 border-radius: {self.BORDER_RADIUS_BOTON}px;
                 font-weight: {self.PESO_SEMIBOLD};
+                font-size: 14px;
             }}
-            QPushButton:first {{
+        """)
+        
+        # Estilo específico para el botón "Sí" (rojo)
+        btn_si.setStyleSheet(f"""
+            QPushButton {{
                 background-color: {self.COLOR_PELIGRO};
                 color: white;
                 border: none;
             }}
-            QPushButton:first:hover {{
+            QPushButton:hover {{
                 background-color: {self.COLOR_PELIGRO_HOVER};
             }}
-            QPushButton:last {{
+        """)
+        
+        # Estilo específico para el botón "No" (secundario)
+        btn_no.setStyleSheet(f"""
+            QPushButton {{
                 background-color: transparent;
                 color: {self.COLOR_TEXTO_PRINCIPAL};
                 border: 1px solid {self.COLOR_BORDE};
             }}
-            QPushButton:last:hover {{
+            QPushButton:hover {{
                 background-color: {self.COLOR_FONDO_VENTANA};
             }}
         """)
         
-        if msg_box.exec() == QMessageBox.Yes:
+        respuesta = msg_box.exec()
+        
+        if msg_box.clickedButton() == btn_si:
             event.accept()
         else:
             event.ignore()
