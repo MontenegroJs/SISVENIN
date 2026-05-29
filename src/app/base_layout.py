@@ -18,8 +18,8 @@ from PySide6.QtWidgets import (
     QLabel, QStackedWidget, QFrame, QScrollArea,
     QPushButton, QMessageBox, QApplication
 )
-from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont, QFontDatabase, QColor
+from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtGui import QFont, QFontDatabase, QColor, QIcon
 
 
 class BaseLayout(QMainWindow):
@@ -400,18 +400,27 @@ class BaseLayout(QMainWindow):
         ahora = datetime.now()
         self.label_fecha_hora.setText(f"Hoy: {ahora.strftime('%d/%m/%Y %H:%M:%S')}")
     
-    def agregar_modulo_menu(self, nombre: str, texto: str, icono: str = "", habilitar: bool = True):
+    def agregar_modulo_menu(self, nombre: str, texto: str, icono: str = "", habilitar: bool = True, icono_es_svg: bool = False):
         """
         Agrega un botón al menú lateral.
         
         Args:
             nombre: Identificador del módulo
             texto: Texto a mostrar
-            icono: Icono (emoji) del botón
+            icono: Icono (emoji o ruta a SVG) del botón
             habilitar: Si el botón está habilitado
+            icono_es_svg: Si es True, icono es una ruta a un archivo SVG
         """
-        texto_boton = f"{icono} {texto}" if icono else texto
-        btn = QPushButton(texto_boton)
+        if icono_es_svg and icono and os.path.exists(icono):
+            # Usar QIcon para SVG
+            btn = QPushButton(f" {texto}")  # Espacio antes del texto
+            btn.setIcon(QIcon(icono))
+            btn.setIconSize(QSize(20, 20))
+        else:
+            # Usar emoji
+            texto_boton = f"{icono} {texto}" if icono else texto
+            btn = QPushButton(texto_boton)
+        
         btn.setCursor(Qt.PointingHandCursor)
         btn.setStyleSheet(self._estilo_boton_menu(activo=False))
         btn.setEnabled(habilitar)
@@ -432,7 +441,9 @@ class BaseLayout(QMainWindow):
         widget: QWidget,
         texto_menu: str,
         icono: str = "📄",
-        habilitar_boton: bool = True
+        habilitar_boton: bool = True,
+        titulo_pantalla: Optional[str] = None,
+        icono_es_svg: bool = False  # ← NUEVO PARÁMETRO
     ) -> int:
         """
         Registra un módulo en la aplicación.
@@ -441,22 +452,28 @@ class BaseLayout(QMainWindow):
             nombre: Identificador del módulo
             widget: Widget a mostrar
             texto_menu: Texto del botón en el menú
-            icono: Icono del botón
+            icono: Icono (emoji o ruta a SVG) del botón
             habilitar_boton: Si el botón está habilitado
+            titulo_pantalla: Título que se muestra en la cabecera (si es None, usa texto_menu)
+            icono_es_svg: Si es True, icono es una ruta a un archivo SVG
             
         Returns:
             int: Índice del módulo
         """
         indice = self.stacked_widget.addWidget(widget)
-        btn = self.agregar_modulo_menu(nombre, texto_menu, icono, habilitar_boton)
+        btn = self.agregar_modulo_menu(nombre, texto_menu, icono, habilitar_boton, icono_es_svg)
         
-        btn.clicked.connect(lambda checked, idx=indice, nom=texto_menu: self._mostrar_modulo(idx, nom))
+        # Usar titulo_pantalla si se proporciona, si no usar texto_menu
+        titulo = titulo_pantalla if titulo_pantalla else texto_menu
+        
+        btn.clicked.connect(lambda checked, idx=indice, nom=titulo: self._mostrar_modulo(idx, nom))
         
         self.modulos[nombre] = {
             "indice": indice,
             "widget": widget,
             "boton": btn,
-            "texto_menu": texto_menu
+            "texto_menu": texto_menu,
+            "titulo_pantalla": titulo
         }
         
         return indice
