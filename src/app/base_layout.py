@@ -2,20 +2,11 @@
 BaseLayout - Layout genérico de la aplicación con menú lateral izquierdo
 Diseño basado completamente en el Prompt 0 (Sistema de Diseño) de Figma SISVENIN
 
-Ahora utiliza los componentes compartidos:
-- SisButton, SisIconButton
-- SisCard, SisMetricCard
-- SisInput, SisNumberInput, SisSelect
-- SisModal, SisConfirmModal
-- SisAlert, SisAlertList, SisEmptyState
-
 Especificaciones aplicadas:
 - Paleta de colores: Verde #2E7D32, Rojo #D32F2F, Fondo #F5F5F5
-- Tipografía: 'Segoe UI', 'Roboto', sans-serif
+- Tipografía: Roboto (con fallback Segoe UI, sans-serif)
 - Espaciado: Sistema octal (múltiplos de 8px)
-- Botones: altura mínima 48px, border-radius 8px
-- Tarjetas: border-radius 12px, sombra suave
-- Inputs: focus con borde #2E7D32 y sombra suave
+- Line-height: 1.4 para legibilidad
 """
 
 import os
@@ -25,59 +16,61 @@ from typing import Optional, Callable, List, Any
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QStackedWidget, QStatusBar, QFrame, QScrollArea,
-    QPushButton, QMessageBox
+    QPushButton, QMessageBox, QApplication
 )
-from PySide6.QtCore import Qt, QTimer, QSize, Signal
-from PySide6.QtGui import QFont, QFontDatabase, QAction, QColor
-
-# Importar componentes compartidos
-from src.app.shared.components import (
-    SisButton, SisIconButton, SisCard, SisMetricCard,
-    SisInput, SisNumberInput, SisSelect, SisModal, SisConfirmModal,
-    SisAlert, SisAlertList, SisEmptyState
-)
+from PySide6.QtCore import Qt, QTimer, QSize
+from PySide6.QtGui import QFont, QFontDatabase, QColor
 
 
 class BaseLayout(QMainWindow):
     """
     Layout base con menú lateral izquierdo y área de contenido derecha.
     Siguiendo el diseño acordado en el Prompt 0 de Figma.
-    Ahora utiliza los componentes compartidos para consistencia.
+    
+    Este layout NO importa componentes compartidos. Su responsabilidad es
+    exclusivamente estructural. Las vistas deben importar y usar los
+    componentes compartidos directamente.
     """
     
     # ==================== CONSTANTES DE DISEÑO (Prompt 0) ====================
     
     # Colores
-    COLOR_PRIMARIO = "#2E7D32"           # Verde principal
-    COLOR_PRIMARIO_HOVER = "#1B5E20"     # Verde más oscuro
-    COLOR_PRIMARIO_DESABILITADO = "#A5D6A7"  # Verde claro
+    COLOR_PRIMARIO = "#2E7D32"
+    COLOR_PRIMARIO_HOVER = "#1B5E20"
+    COLOR_PRIMARIO_DESABILITADO = "#A5D6A7"
     
-    COLOR_PELIGRO = "#D32F2F"            # Rojo alerta
-    COLOR_PELIGRO_HOVER = "#C62828"      # Rojo más oscuro
+    COLOR_PELIGRO = "#D32F2F"
+    COLOR_PELIGRO_HOVER = "#C62828"
     
-    COLOR_FONDO_VENTANA = "#F5F5F5"      # Gris muy claro
-    COLOR_TARJETA = "#FFFFFF"            # Blanco
-    COLOR_TEXTO_PRINCIPAL = "#212121"    # Casi negro
-    COLOR_TEXTO_SECUNDARIO = "#757575"   # Gris medio
-    COLOR_BORDE = "#E0E0E0"              # Gris para bordes
-    COLOR_PLACEHOLDER = "#BDBDBD"        # Gris claro para placeholders
-    COLOR_HOVER_FILA = "#FAFAFA"         # Hover sobre filas de tabla
+    COLOR_FONDO_VENTANA = "#F5F5F5"
+    COLOR_TARJETA = "#FFFFFF"
+    COLOR_TEXTO_PRINCIPAL = "#212121"
+    COLOR_TEXTO_SECUNDARIO = "#757575"
+    COLOR_BORDE = "#E0E0E0"
+    COLOR_PLACEHOLDER = "#BDBDBD"
+    COLOR_HOVER_FILA = "#FAFAFA"
     
-    COLOR_ALERTA_STOCK_BG = "#FFEBEE"    # Fondo rojo muy claro
-    COLOR_ALERTA_STOCK_BORDER = "#D32F2F"  # Borde rojo
-    COLOR_ALERTA_VENCE_BG = "#FFF3E0"    # Fondo naranja muy claro
-    COLOR_ALERTA_VENCE_BORDER = "#FF9800"  # Borde naranja
-    COLOR_MENU_ACTIVO_BG = "#E8F5E9"     # Verde muy claro
-    COLOR_MENU_ACTIVO_BORDER = "#2E7D32"  # Borde izquierdo verde
+    COLOR_ALERTA_STOCK_BG = "#FFEBEE"
+    COLOR_ALERTA_STOCK_BORDER = "#D32F2F"
+    COLOR_ALERTA_VENCE_BG = "#FFF3E0"
+    COLOR_ALERTA_VENCE_BORDER = "#FF9800"
+    COLOR_MENU_ACTIVO_BG = "#E8F5E9"
+    COLOR_MENU_ACTIVO_BORDER = "#2E7D32"
     
-    # Tamaños de fuente
-    FUENTE_TITULO = "24px"
-    FUENTE_SUBTITULO = "18px"
-    FUENTE_CUERPO = "14px"
-    FUENTE_BOTON = "16px"
-    FUENTE_TOTAL_POS = "32px"
-    FUENTE_VUELTO_POS = "48px"
-    FUENTE_ALERTA = "14px"
+    # Tamaños de fuente (en píxeles)
+    FUENTE_TITULO = 24
+    FUENTE_SUBTITULO = 18
+    FUENTE_CUERPO = 14
+    FUENTE_BOTON = 16
+    FUENTE_TOTAL_POS = 32
+    FUENTE_VUELTO_POS = 48
+    FUENTE_ALERTA = 14
+    
+    # Pesos de fuente (usando valores numéricos de Qt)
+    PESO_NORMAL = QFont.Normal      # 50 - Regular
+    PESO_MEDIUM = QFont.Medium      # 57 - Medium
+    PESO_SEMIBOLD = QFont.DemiBold  # 63 - Semibold
+    PESO_BOLD = QFont.Bold          # 75 - Bold
     
     # Espaciados (sistema octal)
     PADDING_PEQUENO = 8
@@ -104,6 +97,12 @@ class BaseLayout(QMainWindow):
         self.setWindowTitle("SISVENIN - Minimarket Villa Carrion")
         self.setGeometry(100, 100, *self.TAMANO_RECOMENDADO_VENTANA)
         self.setMinimumSize(*self.TAMANO_MINIMO_VENTANA)
+        
+        # Cargar fuentes Roboto
+        self._cargar_fuentes()
+        
+        # Configurar fuente por defecto
+        self._configurar_fuente_por_defecto()
         
         # Aplicar estilos base
         self._aplicar_estilos_base()
@@ -138,17 +137,86 @@ class BaseLayout(QMainWindow):
         self.timer_fecha.start(1000)
         self.actualizar_fecha_hora()
     
+    def _cargar_fuentes(self):
+        """
+        Carga las fuentes Roboto desde la carpeta de recursos.
+        Registra las fuentes en Qt para que estén disponibles.
+        """
+        # Buscar la carpeta de fuentes
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        
+        posibles_ubicaciones = [
+            os.path.join(base_dir, "src", "app", "fonts"),
+            os.path.join(base_dir, "src", "assets", "fonts"),
+            os.path.join(base_dir, "src", "app", "assets", "fonts"),
+        ]
+        
+        fonts_dir = None
+        for ubicacion in posibles_ubicaciones:
+            if os.path.exists(ubicacion):
+                fonts_dir = ubicacion
+                break
+        
+        if not fonts_dir:
+            print("⚠️ No se encontró la carpeta de fuentes Roboto")
+            return
+        
+        # Registrar todas las fuentes .ttf
+        fuentes_registradas = 0
+        for archivo in os.listdir(fonts_dir):
+            if archivo.endswith(".ttf"):
+                ruta_completa = os.path.join(fonts_dir, archivo)
+                font_id = QFontDatabase.addApplicationFont(ruta_completa)
+                if font_id != -1:
+                    fuentes_registradas += 1
+        
+        print(f"📦 {fuentes_registradas} fuentes Roboto registradas")
+        
+        # Verificar fuentes disponibles (debug)
+        familias_roboto = [f for f in QFontDatabase.families() if "Roboto" in f]
+        if familias_roboto:
+            print(f"🔤 Fuentes Roboto disponibles: {familias_roboto[:3]}...")
+    
+    def _configurar_fuente_por_defecto(self):
+        """
+        Configura la fuente por defecto de toda la aplicación.
+        Replica el comportamiento de React: Roboto con fallback Segoe UI.
+        """
+        # Intentar usar Roboto como fuente principal
+        fuente_base = QFont("Roboto", self.FUENTE_CUERPO)
+        fuente_base.setWeight(QFont.Normal)  # Usar constante de Qt
+        
+        # Verificar si Roboto está disponible
+        if "Roboto" not in QFontDatabase.families():
+            # Fallback a Segoe UI (Windows) o sans-serif
+            print("⚠️ Roboto no disponible, usando Segoe UI como fallback")
+            fuente_base = QFont("Segoe UI", self.FUENTE_CUERPO)
+            fuente_base.setWeight(QFont.Normal)
+        
+        # Aplicar a toda la aplicación
+        app = QApplication.instance()
+        if app:
+            app.setFont(fuente_base)
+        
+        # Configurar fuente para labels específicos (line-height se maneja en CSS)
+        # Qt no soporta line-height directamente, se maneja con padding/margins
+    
     def _aplicar_estilos_base(self):
-        """Aplica los estilos base a toda la aplicación"""
+        """
+        Aplica los estilos base a toda la aplicación.
+        Incluye configuración de line-height a través de padding.
+        """
         self.setStyleSheet(f"""
             QMainWindow {{
                 background-color: {self.COLOR_FONDO_VENTANA};
             }}
             
-            QWidget {{
-                font-family: 'Roboto', 'Segoe UI', sans-serif;
+            /* Estilo base para QLabel con line-height simulado */
+            QLabel {{
+                background-color: transparent;
             }}
             
+            /* Scrollbars */
             QScrollBar:vertical {{
                 background-color: {self.COLOR_FONDO_VENTANA};
                 width: 8px;
@@ -166,10 +234,15 @@ class BaseLayout(QMainWindow):
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
                 height: 0px;
             }}
+            
+            /* Estilo para mejorar la legibilidad (line-height simulado) */
+            QAbstractItemView::item {{
+                padding: 8px 4px;
+            }}
         """)
     
     def _crear_menu_lateral(self):
-        """Crea el menú lateral izquierdo usando componentes"""
+        """Crea el menú lateral izquierdo"""
         self.menu_lateral = QWidget()
         self.menu_lateral.setFixedWidth(self.ANCHO_MENU_LATERAL)
         self.menu_lateral.setObjectName("menuLateral")
@@ -195,14 +268,15 @@ class BaseLayout(QMainWindow):
         
         self.logo_label = QLabel("🛒 SISVENIN")
         self.logo_label.setStyleSheet(f"""
-            font-size: 18px;
-            font-weight: 700;
+            font-size: {self.FUENTE_SUBTITULO}px;
+            font-weight: {self.PESO_BOLD};
             color: {self.COLOR_PRIMARIO};
         """)
         
         self.logo_sub = QLabel("Minimarket Villa Carrion")
         self.logo_sub.setStyleSheet(f"""
             font-size: 12px;
+            font-weight: {self.PESO_NORMAL};
             color: {self.COLOR_TEXTO_SECUNDARIO};
         """)
         
@@ -234,13 +308,21 @@ class BaseLayout(QMainWindow):
         footer_layout = QVBoxLayout(footer_widget)
         
         self.version_label = QLabel("Sistema de Diseño v1.0")
-        self.version_label.setStyleSheet(f"font-size: 12px; color: {self.COLOR_TEXTO_SECUNDARIO};")
+        self.version_label.setStyleSheet(f"""
+            font-size: 12px;
+            font-weight: {self.PESO_NORMAL};
+            color: {self.COLOR_TEXTO_SECUNDARIO};
+        """)
         footer_layout.addWidget(self.version_label)
         
         menu_layout.addWidget(footer_widget)
     
     def _estilo_boton_menu(self, activo: bool = False) -> str:
         """Estilo para botones del menú lateral"""
+        # Usar valores numéricos en CSS
+        peso_normal = 400
+        peso_medium = 500
+        
         if activo:
             return f"""
                 QPushButton {{
@@ -250,8 +332,8 @@ class BaseLayout(QMainWindow):
                     padding: 12px 20px;
                     border: none;
                     border-left: 3px solid {self.COLOR_MENU_ACTIVO_BORDER};
-                    font-size: 16px;
-                    font-weight: 500;
+                    font-size: {self.FUENTE_CUERPO}px;
+                    font-weight: {peso_medium};
                     min-height: 48px;
                 }}
                 QPushButton:hover {{
@@ -266,8 +348,8 @@ class BaseLayout(QMainWindow):
                     text-align: left;
                     padding: 12px 20px;
                     border: none;
-                    font-size: 16px;
-                    font-weight: 500;
+                    font-size: {self.FUENTE_CUERPO}px;
+                    font-weight: {peso_normal};
                     min-height: 48px;
                 }}
                 QPushButton:hover {{
@@ -294,8 +376,8 @@ class BaseLayout(QMainWindow):
         
         self.titulo_pantalla = QLabel("Dashboard")
         self.titulo_pantalla.setStyleSheet(f"""
-            font-size: {self.FUENTE_TITULO};
-            font-weight: 700;
+            font-size: {self.FUENTE_TITULO}px;
+            font-weight: {self.PESO_BOLD};
             color: {self.COLOR_TEXTO_PRINCIPAL};
         """)
         
@@ -304,7 +386,8 @@ class BaseLayout(QMainWindow):
         
         self.label_fecha_hora = QLabel("")
         self.label_fecha_hora.setStyleSheet(f"""
-            font-size: 14px;
+            font-size: {self.FUENTE_CUERPO}px;
+            font-weight: {self.PESO_NORMAL};
             color: {self.COLOR_TEXTO_SECUNDARIO};
         """)
         cabecera_layout.addWidget(self.label_fecha_hora)
@@ -327,6 +410,7 @@ class BaseLayout(QMainWindow):
                 border-top: 1px solid {self.COLOR_BORDE};
                 padding: 4px 16px;
                 font-size: 13px;
+                font-weight: {self.PESO_NORMAL};
             }}
         """)
         self.status_bar.showMessage("✅ Sistema listo")
@@ -420,73 +504,6 @@ class BaseLayout(QMainWindow):
         """Muestra un mensaje en la barra de estado"""
         self.status_bar.showMessage(mensaje)
     
-    # ==================== MÉTODOS DE COMPONENTES (DELEGACIÓN) ====================
-    
-    def crear_boton_primario(self, texto: str, callback: Optional[Callable] = None) -> SisButton:
-        """Crea un botón primario usando SisButton"""
-        btn = SisButton(texto, variant="primary")
-        if callback:
-            btn.clicked.connect(callback)
-        return btn
-    
-    def crear_boton_secundario(self, texto: str, callback: Optional[Callable] = None) -> SisButton:
-        """Crea un botón secundario usando SisButton"""
-        btn = SisButton(texto, variant="secondary")
-        if callback:
-            btn.clicked.connect(callback)
-        return btn
-    
-    def crear_boton_peligro(self, texto: str, callback: Optional[Callable] = None) -> SisButton:
-        """Crea un botón peligro usando SisButton"""
-        btn = SisButton(texto, variant="danger")
-        if callback:
-            btn.clicked.connect(callback)
-        return btn
-    
-    def crear_tarjeta(self, titulo: Optional[str] = None, contenido: Optional[QWidget] = None) -> SisCard:
-        """Crea una tarjeta usando SisCard"""
-        tarjeta = SisCard(title=titulo)
-        if contenido:
-            tarjeta.set_content(contenido)
-        return tarjeta
-    
-    def crear_tarjeta_metrica(
-        self,
-        label: str,
-        value: str,
-        sub_value: Optional[str] = None,
-        highlight: bool = False,
-        icon: Optional[str] = None
-    ) -> SisMetricCard:
-        """Crea una tarjeta de métrica usando SisMetricCard"""
-        return SisMetricCard(
-            label=label,
-            value=value,
-            sub_value=sub_value,
-            highlight=highlight,
-            icon=icon
-        )
-    
-    def crear_input(self, placeholder: str = "", align_right: bool = False) -> SisInput:
-        """Crea un input usando SisInput"""
-        return SisInput(placeholder=placeholder, align_right=align_right)
-    
-    def crear_input_numero(self, prefix: str = "", suffix: str = "") -> SisNumberInput:
-        """Crea un input numérico usando SisNumberInput"""
-        return SisNumberInput(prefix=prefix, suffix=suffix)
-    
-    def crear_modal(self, titulo: str, size: str = "sm", on_close: Optional[Callable] = None) -> SisModal:
-        """Crea un modal usando SisModal"""
-        return SisModal(title=titulo, size=size, on_close=on_close)
-    
-    def crear_alerta_stock(self, texto: str, on_click: Optional[Callable] = None) -> SisAlert:
-        """Crea una alerta de stock bajo"""
-        return SisAlert(type="stock", text=texto, on_click=on_click)
-    
-    def crear_alerta_vencimiento(self, texto: str, on_click: Optional[Callable] = None) -> SisAlert:
-        """Crea una alerta de vencimiento próximo"""
-        return SisAlert(type="expiry", text=texto, on_click=on_click)
-    
     # ==================== CIERRE DE APLICACIÓN ====================
     
     def closeEvent(self, event):
@@ -506,12 +523,13 @@ class BaseLayout(QMainWindow):
             QMessageBox QLabel {{
                 color: {self.COLOR_TEXTO_PRINCIPAL};
                 font-size: 14px;
+                font-weight: {self.PESO_NORMAL};
             }}
             QPushButton {{
                 min-width: 80px;
                 padding: 8px 16px;
                 border-radius: {self.BORDER_RADIUS_BOTON}px;
-                font-weight: 600;
+                font-weight: {self.PESO_SEMIBOLD};
             }}
             QPushButton:first {{
                 background-color: {self.COLOR_PELIGRO};

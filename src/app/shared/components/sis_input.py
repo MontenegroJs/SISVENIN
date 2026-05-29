@@ -173,25 +173,36 @@ class SisInput(QWidget):
         return self._input
 
 
-class SisNumberInput(SisInput):
+class SisNumberInput(QWidget):
     """
     Input numérico de SISVENIN.
-    Extiende SisInput con funcionalidades de número.
+    Clase independiente (no hereda de SisInput) para mayor robustez.
     
     Características adicionales:
     - Alineación derecha por defecto
     - Mínimo y máximo configurables
-    - Pasos configurables
+    - Prefijo y sufijo (ej: S/ , %)
     
     Ejemplos:
         cantidad = SisNumberInput(placeholder="0", min_value=0, max_value=999)
-        precio = SisNumberInput(placeholder="0.00", decimals=2, prefix="S/ ")
+        precio = SisNumberInput(label="Precio", decimals=2, prefix="S/ ")
     """
+    
+    # Señales
+    textChanged = Signal(str)
+    valueChanged = Signal(float)
+    
+    # Constantes de estilo (Prompt 0)
+    _COLOR_PRIMARIO = "#2E7D32"
+    _COLOR_BORDE = "#E0E0E0"
+    _COLOR_TEXTO = "#212121"
+    _BORDER_RADIUS = 8
+    _ALTURA_MINIMA = 48
     
     def __init__(
         self,
         label: Optional[str] = None,
-        placeholder: str = "0",
+        placeholder: str = "",
         min_value: float = 0,
         max_value: float = 999999.99,
         decimals: int = 2,
@@ -203,8 +214,8 @@ class SisNumberInput(SisInput):
         Inicializa el input numérico.
         
         Args:
-            label: Texto del label
-            placeholder: Texto de placeholder
+            label: Texto del label (opcional, aparece arriba)
+            placeholder: Texto de placeholder (no muestra nada, solo referencia)
             min_value: Valor mínimo permitido
             max_value: Valor máximo permitido
             decimals: Número de decimales
@@ -212,13 +223,28 @@ class SisNumberInput(SisInput):
             suffix: Texto después del valor (ej: " %")
             parent: Widget padre
         """
-        # Llamar al constructor de SisInput sin crear el QLineEdit aún
-        super().__init__(label=label, parent=parent)
+        super().__init__(parent)
         
-        # Guardar referencia al layout para reemplazar el widget
-        old_input = self._input
+        self._focused = False
         
-        # Crear QDoubleSpinBox como reemplazo
+        # Layout principal
+        if label:
+            self._main_layout = QVBoxLayout(self)
+            self._main_layout.setContentsMargins(0, 0, 0, 0)
+            self._main_layout.setSpacing(8)
+            
+            self._label = QLabel(label)
+            self._label.setStyleSheet("""
+                font-size: 14px;
+                font-weight: 600;
+                color: #212121;
+            """)
+            self._main_layout.addWidget(self._label)
+        else:
+            self._main_layout = QHBoxLayout(self)
+            self._main_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Input numérico
         self._input = QDoubleSpinBox()
         self._input.setMinimum(min_value)
         self._input.setMaximum(max_value)
@@ -230,20 +256,50 @@ class SisNumberInput(SisInput):
         self._input.setButtonSymbols(QDoubleSpinBox.NoButtons)
         self._input.setCorrectionMode(QDoubleSpinBox.CorrectToPreviousValue)
         
-        # Reemplazar en el layout
-        if label:
-            # Encontrar el layout del label
-            pass
-        
-        # Eliminar el QLineEdit y agregar el QDoubleSpinBox
-        old_input.deleteLater()
+        # Placeholder: QDoubleSpinBox no soporta placeholder nativamente,
+        # pero podemos usar setSpecialValueText o simplemente ignorarlo
         
         # Conectar señales
         self._input.textChanged.connect(self.textChanged.emit)
+        self._input.valueChanged.connect(self.valueChanged.emit)
         self._input.installEventFilter(self)
         
-        self._main_layout.addWidget(self._input)
         self._actualizar_estilo()
+        
+        self._main_layout.addWidget(self._input)
+    
+    def _actualizar_estilo(self):
+        """Actualiza el estilo del input según el estado de focus"""
+        borde_color = self._COLOR_PRIMARIO if self._focused else self._COLOR_BORDE
+        borde_width = "2px" if self._focused else "1px"
+        
+        self._input.setStyleSheet(f"""
+            QDoubleSpinBox {{
+                font-size: 14px;
+                padding: 12px;
+                border: {borde_width} solid {borde_color};
+                border-radius: {self._BORDER_RADIUS}px;
+                background-color: white;
+                min-height: {self._ALTURA_MINIMA - 24}px;
+                color: {self._COLOR_TEXTO};
+            }}
+            QDoubleSpinBox:focus {{
+                border: 2px solid {self._COLOR_PRIMARIO};
+                outline: none;
+            }}
+        """)
+    
+    def eventFilter(self, obj, event):
+        """Captura eventos de focus para cambiar el estilo"""
+        if obj == self._input:
+            from PySide6.QtCore import QEvent
+            if event.type() == QEvent.FocusIn:
+                self._focused = True
+                self._actualizar_estilo()
+            elif event.type() == QEvent.FocusOut:
+                self._focused = False
+                self._actualizar_estilo()
+        return super().eventFilter(obj, event)
     
     def value(self) -> float:
         """Retorna el valor numérico actual"""
@@ -265,3 +321,23 @@ class SisNumberInput(SisInput):
         """Establece el rango de valores permitidos"""
         self._input.setMinimum(min_val)
         self._input.setMaximum(max_val)
+    
+    def set_decimals(self, decimals: int):
+        """Establece el número de decimales"""
+        self._input.setDecimals(decimals)
+    
+    def set_enabled(self, enabled: bool):
+        """Habilita o deshabilita el input"""
+        self._input.setEnabled(enabled)
+    
+    def set_focus(self):
+        """Establece el foco en el input"""
+        self._input.setFocus()
+    
+    def clear(self):
+        """Limpia el valor (lo establece a 0)"""
+        self._input.setValue(0)
+    
+    def get_spinbox(self) -> QDoubleSpinBox:
+        """Retorna el QDoubleSpinBox interno para configuraciones avanzadas"""
+        return self._input
