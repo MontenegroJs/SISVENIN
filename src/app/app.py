@@ -18,7 +18,7 @@ class App(BaseLayout):
         super().__init__()
         self._registrar_modulos()
         # Mostrar Dashboard por defecto
-        self._mostrar_modulo_por_nombre("productos")
+        self._mostrar_modulo_por_nombre("dashboard")
     
     def _obtener_ruta_icono(self, nombre_icono: str) -> str:
         """
@@ -51,10 +51,8 @@ class App(BaseLayout):
         )
         
         # Módulo POS
-        self.vista_pos = VentaVista(
-            on_navigate_to_report=self._ir_a_reportes,
-            on_navigate_to_products=self._ir_a_productos
-        )
+        self.vista_pos = VentaVista()
+        
         self.registrar_modulo(
             nombre="pos",
             widget=self.vista_pos,

@@ -282,6 +282,60 @@ class ProductoControlador:
             return []
         return ProductoModelo.buscar_por_nombre(termino.strip())
     
+    @staticmethod
+    def buscar_por_codigo(codigo: str) -> Optional[ProductoModelo]:
+        """
+        Busca un producto por código de barras.
+        
+        Args:
+            codigo: Código de barras del producto.
+        
+        Returns:
+            Producto encontrado o None.
+        """
+        if not codigo or not codigo.strip():
+            return None
+        
+        return ProductoModelo.buscar_por_codigo_barras(codigo.strip())
+
+    @staticmethod
+    def buscar_rapido_pos(termino: str, limite: int = 10) -> List[ProductoModelo]:
+        """
+        Búsqueda rápida optimizada para el POS.
+        
+        Args:
+            termino: Texto a buscar (nombre o código).
+            limite: Número máximo de resultados.
+        
+        Returns:
+            Lista de productos encontrados.
+        """
+        if not termino or not termino.strip():
+            return []
+        
+        return ProductoModelo.buscar_rapido(termino.strip(), limite)
+
+    @staticmethod
+    def validar_codigo_barras(codigo: str) -> bool:
+        """
+        Valida que el código de barras sea numérico y tenga entre 8 y 13 dígitos.
+        
+        Args:
+            codigo: Código de barras a validar.
+        
+        Returns:
+            True si es válido, False en caso contrario.
+        """
+        if not codigo or not codigo.strip():
+            return False
+        
+        codigo_limpio = codigo.strip()
+        
+        if not codigo_limpio.isdigit():
+            return False
+        
+        return 8 <= len(codigo_limpio) <= 13
+    
     # ==================== MÉTODOS PARA ALERTAS (HU-04) ====================
     
     @staticmethod
