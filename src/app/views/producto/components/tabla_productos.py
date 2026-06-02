@@ -6,9 +6,10 @@ Características:
 - Columnas específicas: Producto, Precio Venta, Stock, Precio Compra, Margen, Vencimiento, Acciones
 - Stock bajo (<5) se muestra en rojo con emoji 🔴
 - Vencimiento próximo (<7 días) se muestra en naranja con emoji ⚠️
-- Botones de acción: Editar (✏️) y Eliminar (🗑️)
+- Botones de acción: Editar (✏️) y Eliminar (🗑️) con estilo SisIconButton
 - Paginación integrada
 - Soporte para resaltado de filas (highlight)
+- CONTROL TOTAL: Anchos de columnas, tamaños de fuente, estilos
 """
 
 from typing import Optional, List
@@ -17,11 +18,12 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView
 )
-from PySide6.QtCore import Qt, Signal, QTimer, QCoreApplication
+from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QColor, QFont
 
 from src.app.base_layout import BaseLayout
 from src.app.models.producto_modelo import ProductoModelo
+from src.app.shared.components.sis_button import SisIconButton
 
 
 class TablaProductos(QWidget):
@@ -39,6 +41,25 @@ class TablaProductos(QWidget):
     _COLOR_STOCK_BAJO = BaseLayout.COLOR_PELIGRO
     _COLOR_VENCE_PROXIMO = "#FF9800"
     _COLOR_HIGHLIGHT = "#FFF9C4"
+    
+    # 🔧 CONFIGURACIÓN DE COLUMNAS (como en React)
+    # Formato: (título, ancho, alineación, fuente_peso)
+    COLUMNAS = [
+        {"titulo": "Producto",        "ancho": 300, "align": "left",   "peso": "normal"},
+        {"titulo": "Precio Venta",    "ancho": 120, "align": "right",  "peso": "bold"},
+        {"titulo": "Stock",           "ancho": 100, "align": "center", "peso": "normal"},
+        {"titulo": "Precio Compra",   "ancho": 120, "align": "right",  "peso": "normal"},
+        {"titulo": "Margen",          "ancho": 80,  "align": "center", "peso": "normal"},
+        {"titulo": "Vencimiento",     "ancho": 130, "align": "left",   "peso": "normal"},
+        {"titulo": "Acciones",        "ancho": 100, "align": "center", "peso": "normal"},
+    ]
+    
+    # 🔧 TAMAÑOS DE FUENTE
+    FUENTE_TITULO_TAMANO = 13
+    FUENTE_TITULO_PESO = 600
+    
+    FUENTE_CELDA_TAMANO = 14
+    FUENTE_CELDA_BOLD_PESO = 700
     
     def __init__(
         self,
@@ -63,10 +84,17 @@ class TablaProductos(QWidget):
         
         # ==================== TABLA ====================
         self._table = QTableWidget()
-        self._table.setColumnCount(7)
-        self._table.setHorizontalHeaderLabels([
-            "Producto", "Precio Venta", "Stock", "Precio Compra", "Margen", "Vencimiento", "Acciones"
-        ])
+        self._table.setColumnCount(len(self.COLUMNAS))
+        
+        # Configurar encabezados y anchos
+        for col, config in enumerate(self.COLUMNAS):
+            self._table.setHorizontalHeaderItem(col, QTableWidgetItem(config["titulo"]))
+            # Establecer ancho mínimo en lugar de fijo para la columna Producto
+            if col == 0:  # Columna Producto
+                self._table.setColumnWidth(col, config["ancho"])
+            else:
+                self._table.setColumnWidth(col, config["ancho"])
+        
         self._table.setAlternatingRowColors(True)
         self._table.setSelectionBehavior(QTableWidget.SelectRows)
         self._table.setSelectionMode(QTableWidget.SingleSelection)
@@ -74,36 +102,31 @@ class TablaProductos(QWidget):
         self._table.verticalHeader().setVisible(False)
         self._table.setShowGrid(False)
         
-        # Configurar ancho de columnas (como en React)
+        # Configurar comportamiento del header
         header = self._table.horizontalHeader()
-        
-        # Columna Producto: ocupa el espacio restante
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        
-        # Las demás columnas: se ajustan al contenido
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)  # Precio Venta
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)  # Stock
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Precio Compra
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)  # Margen
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)  # Vencimiento
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)  # Acciones
-        
-        # Asegurar que la última columna no se estire
         header.setStretchLastSection(False)
+        header.setSectionsMovable(False)
         
-        # Estilo de la tabla (como en React)
+        # 🔧 CLAVE: Hacer que la columna Producto se expanda
+        header.setSectionResizeMode(0, QHeaderView.Stretch)  # Producto se expande
+        for col in range(1, len(self.COLUMNAS)):
+            header.setSectionResizeMode(col, QHeaderView.Fixed)  # Las demás mantienen ancho fijo
+        
+        # ==================== ESTILO EXPLÍCITO DE LA TABLA ====================
         self._table.setStyleSheet(f"""
             QTableWidget {{
                 background-color: {BaseLayout.COLOR_TARJETA};
                 border: 1px solid {BaseLayout.COLOR_BORDE};
                 border-radius: {BaseLayout.BORDER_RADIUS_TARJETA}px;
-                font-size: 14px;
                 alternate-background-color: {BaseLayout.COLOR_HOVER_FILA};
                 selection-background-color: {BaseLayout.COLOR_HOVER_FILA};
+                outline: none;
+                gridline-color: transparent;
             }}
             QTableWidget::item {{
                 padding: 12px 16px;
                 border-bottom: 1px solid {BaseLayout.COLOR_BORDE};
+                color: {BaseLayout.COLOR_TEXTO_PRINCIPAL};
             }}
             QTableWidget::item:selected {{
                 background-color: {BaseLayout.COLOR_HOVER_FILA};
@@ -113,9 +136,9 @@ class TablaProductos(QWidget):
                 background-color: {BaseLayout.COLOR_FONDO_VENTANA};
                 padding: 12px 16px;
                 border: none;
-                border-bottom: 1px solid {BaseLayout.COLOR_BORDE};
-                font-size: 13px;
-                font-weight: 600;
+                border-bottom: 2px solid {BaseLayout.COLOR_BORDE};
+                font-size: {self.FUENTE_TITULO_TAMANO}px;
+                font-weight: {self.FUENTE_TITULO_PESO};
                 color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
             }}
         """)
@@ -123,16 +146,27 @@ class TablaProductos(QWidget):
         layout.addWidget(self._table)
         
         # ==================== PAGINACIÓN ====================
-        pag_widget = QWidget()
-        pag_layout = QHBoxLayout(pag_widget)
+        self._setup_pagination()
+        layout.addWidget(self._pagination_widget)
+        
+        # Conectar señal de selección
+        self._table.itemSelectionChanged.connect(self._on_selection_changed)
+    
+    def _setup_pagination(self):
+        """Configura la barra de paginación"""
+        self._pagination_widget = QWidget()
+        pag_layout = QHBoxLayout(self._pagination_widget)
         pag_layout.setContentsMargins(0, 12, 0, 0)
         
         self._info_label = QLabel("")
-        self._info_label.setStyleSheet(f"font-size: 13px; color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};")
+        self._info_label.setStyleSheet(f"""
+            font-size: 13px;
+            color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
+        """)
         pag_layout.addWidget(self._info_label)
         pag_layout.addStretch()
         
-        # Botones de paginación
+        # Botón anterior
         self._btn_prev = QPushButton("‹")
         self._btn_prev.setFixedSize(32, 32)
         self._btn_prev.setCursor(Qt.PointingHandCursor)
@@ -153,6 +187,7 @@ class TablaProductos(QWidget):
         """)
         self._btn_prev.clicked.connect(self._prev_page)
         
+        # Indicador de página
         self._page_label = QLabel("")
         self._page_label.setStyleSheet(f"""
             font-size: 13px;
@@ -162,6 +197,7 @@ class TablaProductos(QWidget):
         """)
         self._page_label.setAlignment(Qt.AlignCenter)
         
+        # Botón siguiente
         self._btn_next = QPushButton("›")
         self._btn_next.setFixedSize(32, 32)
         self._btn_next.setCursor(Qt.PointingHandCursor)
@@ -185,42 +221,15 @@ class TablaProductos(QWidget):
         pag_layout.addWidget(self._btn_prev)
         pag_layout.addWidget(self._page_label)
         pag_layout.addWidget(self._btn_next)
-        
-        layout.addWidget(pag_widget)
-        
-        # Conectar señal de selección
-        self._table.itemSelectionChanged.connect(self._on_selection_changed)
-    
-    def _clear_table_completely(self):
-        """Limpia completamente la tabla"""
-        # Desconectar temporalmente la señal para evitar efectos secundarios
-        self._table.blockSignals(True)
-        
-        # Limpiar items
-        self._table.clearContents()
-        
-        # Eliminar cell widgets
-        for row in range(self._table.rowCount()):
-            self._table.removeCellWidget(row, 6)
-        
-        # Resetear número de filas
-        self._table.setRowCount(0)
-        
-        # Forzar actualización
-        self._table.viewport().update()
-        self._table.update()
-        
-        self._table.blockSignals(False)
     
     def _populate_table(self):
         """Llena la tabla con los productos de la página actual"""
-        # Limpiar tabla completamente
-        self._clear_table_completely()
+        # Limpiar tabla
+        self._table.clearContents()
         
         if not self._productos:
+            self._table.setRowCount(0)
             self._update_pagination_info()
-            # Forzar actualización de la vista
-            self._table.viewport().update()
             return
         
         total_pages = max(1, (len(self._productos) + self._items_per_page - 1) // self._items_per_page)
@@ -231,142 +240,96 @@ class TablaProductos(QWidget):
         end = min(start + self._items_per_page, len(self._productos))
         page_productos = self._productos[start:end]
         
-        self._table.blockSignals(True)
         self._table.setRowCount(len(page_productos))
         
         # Configurar altura de filas
         self._table.verticalHeader().setDefaultSectionSize(60)
         
+        # Crear fuentes
+        regular_font = QFont()
+        regular_font.setPointSize(self.FUENTE_CELDA_TAMANO)
+        
+        bold_font = QFont()
+        bold_font.setPointSize(self.FUENTE_CELDA_TAMANO)
+        bold_font.setBold(True)
+        
         for row, p in enumerate(page_productos):
-            # Nombre
-            nombre_item = QTableWidgetItem(p.nombre)
-            nombre_item.setFlags(nombre_item.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 0, nombre_item)
+            # Columna 0: Nombre
+            item = QTableWidgetItem(p.nombre)
+            item.setFont(regular_font)
+            self._table.setItem(row, 0, item)
             
-            # Precio Venta (verde, negrita, derecha)
-            item_precio = QTableWidgetItem(f"S/ {p.precio_venta:.2f}")
-            item_precio.setForeground(QColor(BaseLayout.COLOR_PRIMARIO))
-            item_precio.setFont(QFont("DM Sans", 14, QFont.Bold))
-            item_precio.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            item_precio.setFlags(item_precio.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 1, item_precio)
+            # Columna 1: Precio Venta (verde, negrita)
+            item = QTableWidgetItem(f"S/ {p.precio_venta:.2f}")
+            item.setData(Qt.ForegroundRole, QColor(BaseLayout.COLOR_PRIMARIO))
+            item.setFont(bold_font)
+            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self._table.setItem(row, 1, item)
             
-            # Stock (con 🔴 si es bajo)
+            # Columna 2: Stock
             if p.stock < 5:
-                stock_text = f"{p.stock} 🔴"
-                stock_item = QTableWidgetItem(stock_text)
-                stock_item.setForeground(QColor(self._COLOR_STOCK_BAJO))
-                stock_item.setFont(QFont("DM Sans", 14, QFont.Bold))
+                item = QTableWidgetItem(f"{p.stock} 🔴")
+                item.setForeground(QColor(self._COLOR_STOCK_BAJO))
+                item.setFont(bold_font)
             else:
-                stock_item = QTableWidgetItem(str(p.stock))
-                stock_item.setFont(QFont("DM Sans", 14))
-            stock_item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-            stock_item.setFlags(stock_item.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 2, stock_item)
+                item = QTableWidgetItem(str(p.stock))
+                item.setFont(regular_font)
+            item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+            self._table.setItem(row, 2, item)
             
-            # Precio Compra
-            item_compra = QTableWidgetItem(f"S/ {p.precio_compra:.2f}")
-            item_compra.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
-            item_compra.setFlags(item_compra.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 3, item_compra)
+            # Columna 3: Precio Compra
+            item = QTableWidgetItem(f"S/ {p.precio_compra:.2f}")
+            item.setFont(regular_font)
+            item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self._table.setItem(row, 3, item)
             
-            # Margen
-            item_margen = QTableWidgetItem(f"{p.margen:.0f}%")
-            item_margen.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
-            item_margen.setFlags(item_margen.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 4, item_margen)
+            # Columna 4: Margen
+            item = QTableWidgetItem(f"{p.margen:.0f}%")
+            item.setFont(regular_font)
+            item.setTextAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+            self._table.setItem(row, 4, item)
             
-            # Vencimiento (con ⚠️ si es próximo)
+            # Columna 5: Vencimiento
             if p.vencimiento:
                 vence_str = p.vencimiento.strftime("%d/%m/%Y")
                 hoy = date.today()
                 dias_restantes = (p.vencimiento - hoy).days
                 
                 if 0 <= dias_restantes <= 7:
-                    vence_item = QTableWidgetItem(f"⚠️ {vence_str}")
-                    vence_item.setForeground(QColor(self._COLOR_VENCE_PROXIMO))
-                    vence_item.setFont(QFont("DM Sans", 14, QFont.Bold))
+                    item = QTableWidgetItem(f"⚠️ {vence_str}")
+                    item.setForeground(QColor(self._COLOR_VENCE_PROXIMO))
+                    item.setFont(bold_font)
                 else:
-                    vence_item = QTableWidgetItem(vence_str)
-                    vence_item.setFont(QFont("DM Sans", 14))
-                vence_item.setFlags(vence_item.flags() & ~Qt.ItemIsEditable)
-                self._table.setItem(row, 5, vence_item)
+                    item = QTableWidgetItem(vence_str)
+                    item.setFont(regular_font)
+                self._table.setItem(row, 5, item)
             else:
                 item = QTableWidgetItem("—")
-                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                item.setFont(regular_font)
                 self._table.setItem(row, 5, item)
             
-            # Botones de acción
+            # Columna 6: Acciones (botones)
             acciones_widget = self._create_acciones_widget(p)
             self._table.setCellWidget(row, 6, acciones_widget)
         
-        self._table.blockSignals(False)
-        
-        # FORZAR ACTUALIZACIÓN COMPLETA
-        self._table.resizeColumnsToContents()
         self._table.resizeRowsToContents()
-        self._table.viewport().update()
-        self._table.update()
-        
-        # Forzar un repaint del widget padre también
-        if self.parent():
-            self.parent().update()
-        
         self._update_pagination_info()
     
     def _create_acciones_widget(self, producto: ProductoModelo) -> QWidget:
-        """Crea el widget con los botones de acción"""
+        """Crea el widget con los botones de acción usando SisIconButton"""
         widget = QWidget()
         layout = QHBoxLayout(widget)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(8)
         layout.setAlignment(Qt.AlignCenter)
         
-        # Botón editar
-        btn_editar = QPushButton("✏️")
-        btn_editar.setFixedSize(36, 36)
-        btn_editar.setCursor(Qt.PointingHandCursor)
-        btn_editar.setToolTip("Editar producto")
-        btn_editar.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: 1px solid #E0E0E0;
-                border-radius: 8px;
-                font-size: 14px;
-                color: #757575;
-            }
-            QPushButton:hover {
-                background-color: #F5F5F5;
-                color: #212121;
-            }
-            QPushButton:pressed {
-                background-color: #E0E0E0;
-            }
-        """)
+        # Botón editar (✏️)
+        btn_editar = SisIconButton("✏️", tooltip="Editar producto")
         btn_editar.clicked.connect(lambda: self.editarClicked.emit(producto))
         layout.addWidget(btn_editar)
         
-        # Botón eliminar
-        btn_eliminar = QPushButton("🗑️")
-        btn_eliminar.setFixedSize(36, 36)
-        btn_eliminar.setCursor(Qt.PointingHandCursor)
-        btn_eliminar.setToolTip("Eliminar producto")
-        btn_eliminar.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: 1px solid #E0E0E0;
-                border-radius: 8px;
-                font-size: 14px;
-                color: #757575;
-            }
-            QPushButton:hover {
-                background-color: #FFEBEE;
-                color: #D32F2F;
-            }
-            QPushButton:pressed {
-                background-color: #FFCDD2;
-            }
-        """)
+        # Botón eliminar (🗑️)
+        btn_eliminar = SisIconButton("🗑️", tooltip="Eliminar producto")
         btn_eliminar.clicked.connect(lambda: self.eliminarClicked.emit(producto))
         layout.addWidget(btn_eliminar)
         
@@ -387,7 +350,6 @@ class TablaProductos(QWidget):
         
         self._info_label.setText(f"Mostrando {start}–{end} de {len(self._productos)} productos")
         self._page_label.setText(f"Página {self._current_page} de {total_pages}")
-        
         self._btn_prev.setEnabled(self._current_page > 1)
         self._btn_next.setEnabled(self._current_page < total_pages)
     
@@ -427,7 +389,7 @@ class TablaProductos(QWidget):
         return self._productos
     
     def resaltar_producto(self, producto_id: int):
-        """Resalta un producto en la tabla"""
+        """Resalta un producto en la tabla (fondo amarillo temporal)"""
         for i, p in enumerate(self._productos):
             if p.id == producto_id:
                 page = i // self._items_per_page + 1
@@ -435,14 +397,12 @@ class TablaProductos(QWidget):
                     self._current_page = page
                 self._populate_table()
                 
-                # Resaltar visualmente la fila
                 row_in_page = i - (self._current_page - 1) * self._items_per_page
                 if 0 <= row_in_page < self._table.rowCount():
                     for col in range(self._table.columnCount()):
                         item = self._table.item(row_in_page, col)
                         if item:
                             item.setBackground(QColor(self._COLOR_HIGHLIGHT))
-                    
                     # También resaltar el cell widget
                     cell_widget = self._table.cellWidget(row_in_page, 6)
                     if cell_widget:
@@ -464,7 +424,6 @@ class TablaProductos(QWidget):
                 item = self._table.item(row, col)
                 if item:
                     item.setBackground(QColor())
-            
             # Limpiar resaltado del cell widget
             cell_widget = self._table.cellWidget(row, 6)
             if cell_widget:
@@ -478,8 +437,33 @@ class TablaProductos(QWidget):
         """Limpia la tabla"""
         self._productos = []
         self._current_page = 1
-        self._clear_table_completely()
+        self._table.clearContents()
+        self._table.setRowCount(0)
         self._update_pagination_info()
+    
+    # ==================== MÉTODOS DE CONFIGURACIÓN ====================
+    
+    def set_column_width(self, column: int, width: int):
+        """Establece el ancho de una columna específica"""
+        if 0 <= column < len(self.COLUMNAS):
+            self._table.setColumnWidth(column, width)
+            self.COLUMNAS[column]["ancho"] = width
+    
+    def get_column_width(self, column: int) -> int:
+        """Obtiene el ancho de una columna específica"""
+        if 0 <= column < len(self.COLUMNAS):
+            return self._table.columnWidth(column)
+        return 0
+    
+    def set_font_size(self, size: int):
+        """Establece el tamaño de fuente de las celdas"""
+        self.FUENTE_CELDA_TAMANO = size
+        self.refresh()
+    
+    def set_header_font_size(self, size: int):
+        """Establece el tamaño de fuente de los encabezados"""
+        self.FUENTE_TITULO_TAMANO = size
+        self._table.setStyleSheet(self._table.styleSheet())  # Recargar estilo
 
 
 class TablaProductosSimple(QWidget):
@@ -506,13 +490,17 @@ class TablaProductosSimple(QWidget):
         self._table.setEditTriggers(QTableWidget.NoEditTriggers)
         self._table.verticalHeader().setVisible(False)
         
+        # Configurar anchos de columnas
         header = self._table.horizontalHeader()
         header.setStretchLastSection(True)
         header.setSectionResizeMode(0, QHeaderView.Stretch)
+        for col in range(1, 6):
+            header.setSectionResizeMode(col, QHeaderView.ResizeToContents)
         
+        # Estilo explícito para la tabla simple
         self._table.setStyleSheet(f"""
             QTableWidget {{
-                background-color: white;
+                background-color: {BaseLayout.COLOR_TARJETA};
                 border: 1px solid {BaseLayout.COLOR_BORDE};
                 border-radius: {BaseLayout.BORDER_RADIUS_TARJETA}px;
                 font-size: 14px;
@@ -520,6 +508,7 @@ class TablaProductosSimple(QWidget):
             }}
             QTableWidget::item {{
                 padding: 10px 12px;
+                color: {BaseLayout.COLOR_TEXTO_PRINCIPAL};
             }}
             QHeaderView::section {{
                 background-color: {BaseLayout.COLOR_FONDO_VENTANA};
@@ -538,52 +527,42 @@ class TablaProductosSimple(QWidget):
         self._productos = productos
         self._table.setRowCount(len(productos))
         
+        bold_font = QFont()
+        bold_font.setPointSize(14)
+        bold_font.setBold(True)
+        
         for row, p in enumerate(productos):
             # Producto
-            nombre_item = QTableWidgetItem(p.nombre)
-            nombre_item.setFlags(nombre_item.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 0, nombre_item)
+            self._table.setItem(row, 0, QTableWidgetItem(p.nombre))
             
             # Precio Venta
-            item_precio = QTableWidgetItem(f"S/ {p.precio_venta:.2f}")
-            item_precio.setForeground(QColor(BaseLayout.COLOR_PRIMARIO))
-            item_precio.setFont(QFont("DM Sans", 14, QFont.Bold))
-            item_precio.setFlags(item_precio.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 1, item_precio)
+            item = QTableWidgetItem(f"S/ {p.precio_venta:.2f}")
+            item.setForeground(QColor(BaseLayout.COLOR_PRIMARIO))
+            item.setFont(bold_font)
+            self._table.setItem(row, 1, item)
             
-            # Stock (con 🔴 si es bajo)
+            # Stock
             if p.stock < 5:
-                stock_text = f"{p.stock} 🔴"
-                stock_item = QTableWidgetItem(stock_text)
-                stock_item.setForeground(QColor(BaseLayout.COLOR_PELIGRO))
-                stock_item.setFont(QFont("DM Sans", 14, QFont.Bold))
+                item = QTableWidgetItem(f"{p.stock} 🔴")
+                item.setForeground(QColor(BaseLayout.COLOR_PELIGRO))
+                item.setFont(bold_font)
             else:
-                stock_item = QTableWidgetItem(str(p.stock))
-                stock_item.setFont(QFont("DM Sans", 14))
-            stock_item.setFlags(stock_item.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 2, stock_item)
+                item = QTableWidgetItem(str(p.stock))
+            self._table.setItem(row, 2, item)
             
             # Precio Compra
-            item_compra = QTableWidgetItem(f"S/ {p.precio_compra:.2f}")
-            item_compra.setFlags(item_compra.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 3, item_compra)
+            self._table.setItem(row, 3, QTableWidgetItem(f"S/ {p.precio_compra:.2f}"))
             
             # Margen
-            item_margen = QTableWidgetItem(f"{p.margen:.0f}%")
-            item_margen.setFlags(item_margen.flags() & ~Qt.ItemIsEditable)
-            self._table.setItem(row, 4, item_margen)
+            self._table.setItem(row, 4, QTableWidgetItem(f"{p.margen:.0f}%"))
             
             # Vencimiento
             if p.vencimiento:
-                vence_str = p.vencimiento.strftime("%d/%m/%Y")
-                self._table.setItem(row, 5, QTableWidgetItem(vence_str))
+                self._table.setItem(row, 5, QTableWidgetItem(p.vencimiento.strftime("%d/%m/%Y")))
             else:
-                item = QTableWidgetItem("—")
-                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                self._table.setItem(row, 5, item)
+                self._table.setItem(row, 5, QTableWidgetItem("—"))
         
         self._table.resizeRowsToContents()
-        self._table.viewport().update()
     
     def clear(self):
         """Limpia la tabla"""
