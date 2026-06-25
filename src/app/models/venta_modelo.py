@@ -1,26 +1,57 @@
 """
-Modelo del módulo Venta
+Modelo del módulo Venta - SISVENIN
+HU: Venta rápida en 3 clics
 """
+
 import sqlite3
-import os
+from typing import List, Dict, Optional
+
 
 class VentaModelo:
-    def __init__(self, id=None, nombre="", descripcion=""):
-        self.id = id
-        self.nombre = nombre
-        self.descripcion = descripcion
-        self.activo = True
+    """Modelo de datos para una venta."""
 
-    def __str__(self):
-        return f"{self.nombre} (ID: {self.id})"
-    
-    def guardar(self):
-        """Guarda el objeto en la base de datos (MVC puro - el modelo accede a BD)"""
-        # Aquí iría la lógica de inserción/actualización en SQLite
-        pass
-    
-    @staticmethod
-    def obtener_todos():
-        """Obtiene todos los registros de la base de datos"""
-        # Aquí iría la consulta SELECT
-        pass
+    def __init__(self, id: Optional[int] = None):
+        self.id: Optional[int] = id
+        self.detalle: List[Dict] = []  # carrito de productos
+        self.total: float = 0.0
+        self.activo: bool = True
+
+    # 🧩 1. Agregar producto al carrito
+    def agregar_producto(self, producto, cantidad: int = 1) -> None:
+        """
+        Agrega un producto a la venta.
+        """
+        item = {
+            "producto_id": producto.id,
+            "nombre": producto.nombre,
+            "precio": producto.precio_venta,
+            "cantidad": cantidad,
+            "subtotal": producto.precio_venta * cantidad
+        }
+
+        self.detalle.append(item)
+        self.calcular_total()
+
+    # 🧮 2. Calcular total automático
+    def calcular_total(self) -> float:
+        """
+        Calcula el total de la venta.
+        """
+        self.total = sum(item["subtotal"] for item in self.detalle)
+        return self.total
+
+    # 💾 3. Guardar venta (simulado por ahora)
+    def guardar(self) -> bool:
+        """
+        Guarda la venta en la base de datos.
+        """
+        try:
+            # aquí iría SQLite real luego
+            print("Venta guardada:", self.detalle)
+            return True
+        except Exception:
+            return False
+
+    # 📄 4. Obtener detalle
+    def obtener_detalle(self) -> List[Dict]:
+        return self.detalle
