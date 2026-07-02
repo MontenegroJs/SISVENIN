@@ -12,7 +12,7 @@ class VentaControlador:
 
     def __init__(self):
         self.venta = VentaModelo()
-        self.productos = ProductoControlador()  
+        self.productos = ProductoControlador()
 
     # 🔎 BUSCADOR DE PRODUCTOS (para la vista)
     def buscar_productos(self, texto: str):
@@ -21,19 +21,37 @@ class VentaControlador:
         """
         return self.productos.buscar_productos(texto)
 
-    # ➕ AGREGAR PRODUCTO A LA VENTA (CORREGIDO)
-    def agregar_producto(self, producto):
+    # ➕ AGREGAR PRODUCTO A LA VENTA
+    def agregar_producto(self, producto, cantidad=1):
         """
-        Agrega un producto REAL (ProductoModelo) a la venta.
+        Agrega un producto a la venta.
+        Puede recibir ProductoModelo.
         """
-        self.venta.agregar_producto(producto)
+        self.venta.agregar_producto(producto, cantidad)
 
-    # 💰 OBTENER TOTAL
+    # 💰 OBTENER TOTAL DE VENTA
     def obtener_total(self):
         """
-        Obtiene el total actual de la venta.
+        Retorna el total calculado de la venta.
         """
-        return self.venta.total
+        return self.venta.calcular_total()
+
+    # 💵 HU-02: CALCULAR VUELTO
+    def calcular_vuelto(self, pago, total):
+        """
+        Calcula el vuelto según el pago del cliente.
+        """
+
+        if pago < total:
+            return {
+                "vuelto": 0,
+                "error": f"Falta S/ {total - pago:.2f}"
+            }
+
+        return {
+            "vuelto": pago - total,
+            "error": ""
+        }
 
     # 💾 CONFIRMAR VENTA
     def confirmar_venta(self):
@@ -45,6 +63,6 @@ class VentaControlador:
     # 📄 OBTENER DETALLE DE VENTA
     def obtener_detalle(self):
         """
-        Devuelve el carrito de la venta.
+        Devuelve el detalle de la venta actual.
         """
         return self.venta.obtener_detalle()
