@@ -94,7 +94,7 @@ def test_calcular_vuelto_insuficiente(self):
     self.assertIn("Falta", resultado["error"])
 
 def test_calcular_vuelto_exacto(self):
-    producto = ProductoModelo(
+    producto = "ProductoModelo"(
         id=1,
         nombre="Coca Cola",
         precio_venta=10.0,
