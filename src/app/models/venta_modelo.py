@@ -3,7 +3,6 @@ Modelo del módulo Venta - SISVENIN
 HU: Venta rápida en 3 clics
 """
 
-import sqlite3
 from typing import List, Dict, Optional
 
 
@@ -19,14 +18,20 @@ class VentaModelo:
     # 🧩 1. Agregar producto al carrito
     def agregar_producto(self, producto, cantidad: int = 1) -> None:
         """
-        Agrega un producto a la venta.
+        Agrega un producto a la venta (soporta dict y ProductoModelo).
         """
+
+        # 🔥 compatibilidad dict / objeto (IMPORTANTE PARA TU ERROR)
+        producto_id = producto["id"] if isinstance(producto, dict) else producto.id
+        nombre = producto["nombre"] if isinstance(producto, dict) else producto.nombre
+        precio = producto["precio_venta"] if isinstance(producto, dict) else producto.precio_venta
+
         item = {
-            "producto_id": producto.id,
-            "nombre": producto.nombre,
-            "precio": producto.precio_venta,
+            "producto_id": producto_id,
+            "nombre": nombre,
+            "precio": precio,
             "cantidad": cantidad,
-            "subtotal": producto.precio_venta * cantidad
+            "subtotal": precio * cantidad
         }
 
         self.detalle.append(item)
@@ -46,7 +51,6 @@ class VentaModelo:
         Guarda la venta en la base de datos.
         """
         try:
-            # aquí iría SQLite real luego
             print("Venta guardada:", self.detalle)
             return True
         except Exception:
