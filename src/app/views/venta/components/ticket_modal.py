@@ -1,5 +1,5 @@
 """
-Ticket Modal - SISVENIN
+Ticket Modal - SISVENIN HU-05
 HU-05: Ticket de venta obligatorio
 
 Muestra el ticket de venta en formato legible con:
