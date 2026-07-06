@@ -9,6 +9,7 @@ from src.app.views.dashboard.dashboard_vista import DashboardVista
 from src.app.views.venta.venta_vista import VentaVista
 from src.app.views.reporte.reporte_vista import ReporteVista
 from src.app.views.velocidad.velocidad_vista import VelocidadVista
+from src.app.views.velocidad.velocidad_vista import VelocidadVista
 
 
 class App(BaseLayout):
