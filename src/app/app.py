@@ -37,8 +37,12 @@ class App(BaseLayout):
     def _registrar_modulos(self):
         """Registra todos los módulos de la aplicación"""
         
+        # Ruta de la base de datos
+        db_path = "database/sisvenin.db"
+        
         # Módulo Dashboard
         self.vista_dashboard = DashboardVista(
+            db_path=db_path,
             on_navigate_to_products=self._ir_a_productos
         )
         self.registrar_modulo(
