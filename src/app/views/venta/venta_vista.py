@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QMessageBox, QTableWidget, QTableWidgetItem,
     QPushButton, QHeaderView, QStackedWidget, QAbstractSpinBox
 )
+from PySide6.QtGui import QFont, QColor
 
 from src.app.base_layout import BaseLayout
 from src.app.controllers.producto_controlador import ProductoControlador
@@ -81,10 +82,10 @@ class _SpinBoxPago(QDoubleSpinBox):
         self.contenedor_focus.style().polish(self.contenedor_focus)
 
 
-class VentaVista(QWidget):
+class PanelBusqueda(QWidget):
     """
-    Vista POS de ventas - SISVENIN
-    Compatible con sistema modular (App.py)
+    Panel de búsqueda de productos para el POS.
+    Formato: "Nombre – S/ precio (stock: X)"
     """
 
     # 🔧 TIPOGRAFÍA (mismo patrón de configuración explícita que TablaProductos)
@@ -401,6 +402,33 @@ class VentaVista(QWidget):
             font-weight: {self.FUENTE_ETIQUETA_PESO};
             color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
         """)
+        self.lista_alertas.itemClicked.connect(self._on_alerta_clickeada)
+        layout.addWidget(self.lista_alertas)
+    
+    def _cargar_alertas(self):
+        """Carga los productos con stock bajo (<5)"""
+        productos = self.controlador.obtener_productos_stock_bajo(limite=5)
+        self.lista_alertas.clear()
+        
+        if not productos:
+            item = QListWidgetItem("✅ No hay productos con stock bajo")
+            item.setForeground(Qt.GlobalColor.darkGreen)
+            self.lista_alertas.addItem(item)
+        else:
+            for producto in productos:
+                item_text = f"⚠️ Stock bajo: {producto.nombre} (stock: {producto.stock})"
+                item = QListWidgetItem(item_text)
+                item.setData(Qt.ItemDataRole.UserRole, producto.id)
+                self.lista_alertas.addItem(item)
+    
+    def _on_alerta_clickeada(self, item: QListWidgetItem):
+        producto_id = item.data(Qt.ItemDataRole.UserRole)
+        if producto_id:
+            self.producto_clickeado.emit(producto_id)
+    
+    def refresh(self):
+        """Refresca las alertas"""
+        self._cargar_alertas()
 
         self.input_pago = _SpinBoxPago()
         self.input_pago.setDecimals(2)
@@ -867,10 +895,33 @@ class VentaVista(QWidget):
     def cancelar_venta(self):
         if not self.controlador.venta.detalle:
             return
-
-        respuesta = QMessageBox.question(
-            self, "Cancelar venta",
-            "¿Seguro que deseas vaciar el carrito?"
+        
+        # Calcular total
+        total = sum(p.precio_venta for p in self.carrito)
+            
+        # Verificar que el pago sea suficiente
+        try:
+            pago = float(self.pago_input.text() or "0")
+        except ValueError:
+            pago = 0
+    
+        if pago < total:
+            self._mostrar_mensaje_temporal("❌ Monto insuficiente. Verifique el PAGO CON")
+            return
+    
+        vuelto = pago - total
+            
+        # ----- MOSTRAR TICKET OBLIGATORIO -----
+        # HU-05: Ticket de venta obligatorio
+        # No se puede confirmar una venta sin generar el ticket
+            
+        # Crear y mostrar el modal del ticket
+        ticket_modal = TicketModal(
+            productos=self.carrito.copy(),  # Copiar para que no se modifique
+            total=total,
+            pago=pago,
+            vuelto=vuelto,
+            parent=self
         )
 
         if respuesta == QMessageBox.Yes:

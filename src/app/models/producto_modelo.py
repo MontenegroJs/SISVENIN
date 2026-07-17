@@ -277,6 +277,51 @@ class ProductoModelo:
             return [cls._row_to_producto(row) for row in rows]
     
     @classmethod
+    def buscar_por_codigo_barras(cls, codigo: str) -> Optional['ProductoModelo']:
+        """
+        Busca un producto por código de barras (coincidencia exacta).
+        
+        Args:
+            codigo: Código de barras del producto.
+        
+        Returns:
+            Producto encontrado o None si no existe.
+        """
+        with cls._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT * FROM productos 
+                WHERE activo = 1 AND codigo_barras = ?
+                LIMIT 1
+            """, (codigo,))
+            row = cursor.fetchone()
+            
+            if row:
+                return cls._row_to_producto(row)
+            return None
+
+    @classmethod
+    def buscar_rapido(cls, termino: str, limite: int = 10) -> List['ProductoModelo']:
+        """
+        Búsqueda rápida unificada (nombre o código) para POS.
+        
+        Args:
+            termino: Texto a buscar (puede ser nombre o código de barras).
+            limite: Número máximo de resultados.
+        
+        Returns:
+            Lista de productos que coinciden.
+        """
+        # Si el término es numérico, intentar búsqueda exacta por código primero
+        if termino.isdigit():
+            producto = cls.buscar_por_codigo_barras(termino)
+            if producto:
+                return [producto]
+        
+        # Búsqueda por nombre (coincidencia parcial)
+        return cls.buscar_por_nombre(termino)
+    
+    @classmethod
     def obtener_stock_bajo(cls, limite: int = 5) -> List['ProductoModelo']:
         """
         Obtiene productos con stock menor al límite.

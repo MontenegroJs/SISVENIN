@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS productos (
     precio_compra REAL,
     margen REAL DEFAULT 30.0,
     vencimiento TEXT,  -- DATE format: YYYY-MM-DD
+    codigo_barras TEXT UNIQUE,
     activo INTEGER DEFAULT 1
 );
 
@@ -54,3 +55,5 @@ CREATE INDEX IF NOT EXISTS idx_ventas_fecha ON ventas(fecha);
 -- Consultas de detalles de venta
 CREATE INDEX IF NOT EXISTS idx_venta_detalles_venta_id ON venta_detalles(venta_id);
 CREATE INDEX IF NOT EXISTS idx_venta_detalles_producto_id ON venta_detalles(producto_id);
+
+CREATE INDEX IF NOT EXISTS idx_productos_codigo_barras ON productos(codigo_barras);
