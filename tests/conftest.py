@@ -92,6 +92,31 @@ def db_real_clean():
 
 
 @pytest.fixture
+def db_connection():
+    """
+    Fixture que crea una conexión SQLite a una BD temporal.
+    Útil para pruebas que necesitan manipular datos directamente.
+    """
+    fd, temp_path = tempfile.mkstemp(suffix='.db')
+    os.close(fd)
+    
+    # Ejecutar schema para crear tablas
+    ejecutar_schema(temp_path)
+    
+    # Crear conexión
+    conn = sqlite3.connect(temp_path)
+    
+    yield conn
+    
+    # Cerrar conexión y eliminar archivo
+    conn.close()
+    try:
+        os.unlink(temp_path)
+    except PermissionError:
+        pass
+
+
+@pytest.fixture
 def temp_db():
     """
     Fixture para pruebas del modelo.

@@ -56,6 +56,7 @@ SISVENIN/
 
 ### 2. Crear entorno virtual
 Ejecutar setup en consola
+Ejecutar python database/init_db.py
 
 ### 3. Verificar que todo funciona
 test

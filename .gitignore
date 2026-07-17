@@ -204,3 +204,5 @@ database/*.db-journal
 # Scripts de usuario personalizados (no versionados)
 *.user.bat
 *.user.ps1
+
+indice.txt

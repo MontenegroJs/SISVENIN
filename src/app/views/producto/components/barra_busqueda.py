@@ -117,7 +117,7 @@ class BarraBusqueda(QWidget):
         self._btn_nuevo = SisButton(
             texto="Nuevo Producto",
             variant="primary",
-            icono="➕"  # Ícono de más como en React
+            icono=""  # Ícono de más como en React
         )
         self._btn_nuevo.setMinimumWidth(160)
         layout.addWidget(self._btn_nuevo)
