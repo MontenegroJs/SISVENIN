@@ -58,9 +58,9 @@ class BaseLayout(QMainWindow):
     COLOR_MENU_ACTIVO_BORDER = "#2E7D32"
     
     # Tamaños de fuente (en píxeles)
-    FUENTE_TITULO = 30
-    FUENTE_SUBTITULO = 20
-    FUENTE_CUERPO = 17
+    FUENTE_TITULO = 24
+    FUENTE_SUBTITULO = 18
+    FUENTE_CUERPO = 14
     FUENTE_BOTON = 16
     FUENTE_TOTAL_POS = 32
     FUENTE_VUELTO_POS = 48
@@ -87,7 +87,7 @@ class BaseLayout(QMainWindow):
     
     # Dimensiones
     ANCHO_MENU_LATERAL = 270
-    TAMANO_MINIMO_VENTANA = (1024, 600)
+    TAMANO_MINIMO_VENTANA = (1024, 768)
     TAMANO_RECOMENDADO_VENTANA = (1280, 720)
     
     def __init__(self):
@@ -381,8 +381,8 @@ class BaseLayout(QMainWindow):
         
         self.label_fecha_hora = QLabel("")
         self.label_fecha_hora.setStyleSheet(f"""
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 14px;
+            font-weight: {self.PESO_NORMAL};
             color: {self.COLOR_TEXTO_SECUNDARIO};
         """)
         cabecera_layout.addWidget(self.label_fecha_hora)
@@ -397,10 +397,11 @@ class BaseLayout(QMainWindow):
     # ==================== MÉTODOS PÚBLICOS ====================
     
     def actualizar_fecha_hora(self):
-        """Actualiza la fecha y hora en la cabecera"""
+        """Actualiza la fecha en la cabecera"""
         ahora = datetime.now()
-        self.label_fecha_hora.setText(f"Hoy: {ahora.strftime('%d/%m/%Y %H:%M:%S')}")
-    
+        # Restaurado al formato original: mostrar fecha y hora
+        self.label_fecha_hora.setText(ahora.strftime('%d/%m/%Y %H:%M:%S'))
+
     def agregar_modulo_menu(self, nombre: str, texto: str, icono: str = "", habilitar: bool = True, icono_es_svg: bool = False):
         """
         Agrega un botón al menú lateral.

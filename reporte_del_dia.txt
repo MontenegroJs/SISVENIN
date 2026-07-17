@@ -1,0 +1,25 @@
+MINIMARKET VILLA CARRION
+REPORTE DEL DÍA
+Fecha: 04/07/2026
+
+TOTAL INGRESOS: S/ 168.40
+GANANCIA ESTIMADA: S/ 38.90
+MARGEN PROMEDIO: 23.1%
+
+PRODUCTOS VENDIDOS:
+- Azúcar 1kg | Cant: 8 | P.Unit: S/ 3.20 | Subtotal: S/ 25.60 | %: 15.2%
+- Lentejas | Cant: 5 | P.Unit: S/ 4.50 | Subtotal: S/ 22.50 | %: 13.4%
+- Arroz 5kg | Cant: 1 | P.Unit: S/ 16.00 | Subtotal: S/ 16.00 | %: 9.5%
+- Aceite 1L | Cant: 2 | P.Unit: S/ 8.00 | Subtotal: S/ 16.00 | %: 9.5%
+- Lavavajillas | Cant: 3 | P.Unit: S/ 4.50 | Subtotal: S/ 13.50 | %: 8.0%
+- Tomate triturado | Cant: 3 | P.Unit: S/ 3.50 | Subtotal: S/ 10.50 | %: 6.2%
+- Leche light | Cant: 3 | P.Unit: S/ 3.00 | Subtotal: S/ 9.00 | %: 5.3%
+- Yogur natural | Cant: 3 | P.Unit: S/ 3.00 | Subtotal: S/ 9.00 | %: 5.3%
+- Leche sin lactosa | Cant: 2 | P.Unit: S/ 4.00 | Subtotal: S/ 8.00 | %: 4.8%
+- Galletas soda | Cant: 3 | P.Unit: S/ 2.50 | Subtotal: S/ 7.50 | %: 4.5%
+- Arroz 1kg | Cant: 2 | P.Unit: S/ 3.50 | Subtotal: S/ 7.00 | %: 4.2%
+- Agua 2L | Cant: 2 | P.Unit: S/ 3.00 | Subtotal: S/ 6.00 | %: 3.6%
+- Mantequilla | Cant: 1 | P.Unit: S/ 5.50 | Subtotal: S/ 5.50 | %: 3.3%
+- Leche evaporada | Cant: 2 | P.Unit: S/ 2.50 | Subtotal: S/ 5.00 | %: 3.0%
+- Menestra | Cant: 1 | P.Unit: S/ 4.50 | Subtotal: S/ 4.50 | %: 2.7%
+- Fideo tallarín | Cant: 1 | P.Unit: S/ 2.80 | Subtotal: S/ 2.80 | %: 1.7%
