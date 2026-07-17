@@ -21,8 +21,8 @@ from src.app.shared.components.sis_button import SisButton
 from src.app.shared.components.sis_input import SisInput
 from src.app.controllers.producto_controlador import ProductoControlador
 from src.app.models.producto_modelo import ProductoModelo
-from typing import List, Optional
-
+# PARA EL TICKET
+from src.app.views.venta.components.ticket_modal import TicketModal
 
 class PanelBusqueda(QWidget):
     """
@@ -489,34 +489,52 @@ class VentaVista(QWidget):
             self.vuelto_label.setText(f"S/ {vuelto:.2f}")
             self.vuelto_label.setStyleSheet("color: #D32F2F; font-size: 20px; font-weight: bold;")
     
-    def _confirmar_venta(self):
-        """Confirma la venta actual"""
+    def _confirmar_venta(self) -> None:
+        """Confirma la venta y genera el ticket"""
         if not self.carrito:
             self._mostrar_mensaje_temporal("❌ No hay productos en el carrito")
             return
         
+        # Calcular total
+        total = sum(p.precio_venta for p in self.carrito)
+            
         # Verificar que el pago sea suficiente
         try:
             pago = float(self.pago_input.text() or "0")
         except ValueError:
             pago = 0
-        
-        total = sum(p.precio_venta for p in self.carrito)
-        
+    
         if pago < total:
             self._mostrar_mensaje_temporal("❌ Monto insuficiente. Verifique el PAGO CON")
             return
-        
-        # Aquí iría la lógica de guardar la venta en BD
+    
         vuelto = pago - total
-        self._mostrar_mensaje_temporal(f"✅ Venta confirmada. Vuelto: S/ {vuelto:.2f}")
-        
-        # Limpiar carrito
+            
+        # ----- MOSTRAR TICKET OBLIGATORIO -----
+        # HU-05: Ticket de venta obligatorio
+        # No se puede confirmar una venta sin generar el ticket
+            
+        # Crear y mostrar el modal del ticket
+        ticket_modal = TicketModal(
+            productos=self.carrito.copy(),  # Copiar para que no se modifique
+            total=total,
+            pago=pago,
+            vuelto=vuelto,
+            parent=self
+        )
+    
+        # El ticket se muestra como modal (bloquea la interacción hasta cerrarlo)
+        ticket_modal.exec()
+            
+        # Después de cerrar el ticket, limpiar el carrito
         self.carrito.clear()
         self._actualizar_carrito()
         self._actualizar_total()
         self.pago_input.clear()
         self._calcular_vuelto()
+            
+        self._mostrar_mensaje_temporal("✅ Venta completada correctamente")
+
     
     def _cerrar_caja(self):
         """Cierra la caja y genera reporte del día"""
