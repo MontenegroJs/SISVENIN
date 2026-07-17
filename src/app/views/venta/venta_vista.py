@@ -1,20 +1,27 @@
 """
-Módulo Venta - Vista (POS)
-Sprint 2 - HU-01, HU-02, HU-09: Búsqueda de productos
-
+VentaVista - SISVENIN
+POS rápido 3 clics (compatible con App.py + navegación)
 """
-from typing import Optional, List
+
+from functools import partial
+
+from PySide6.QtCore import Qt, QSize, QTimer, Signal
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QListWidget, 
-    QListWidgetItem, QLabel, QSplitter, QPushButton,
-    QFrame, QScrollArea
+    QWidget, QVBoxLayout, QHBoxLayout,
+    QLineEdit, QListWidget, QListWidgetItem, QLabel,
+    QMessageBox, QTableWidget, QTableWidgetItem,
+    QPushButton, QHeaderView, QScrollArea, QFrame, QSplitter
 )
-from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QColor
+
+from src.app.base_layout import BaseLayout
+from src.app.controllers.venta_controlador import VentaControlador
+from src.app.shared.components.sis_button import SisButton
 
 from src.app.shared.components.sis_input import SisInput
 from src.app.controllers.producto_controlador import ProductoControlador
 from src.app.models.producto_modelo import ProductoModelo
+from typing import List, Optional
 
 
 class PanelBusqueda(QWidget):
@@ -132,7 +139,6 @@ class PanelBusqueda(QWidget):
     
     def _color_from_hex(self, hex_color: str):
         """Convierte hex a QColor"""
-        from PySide6.QtGui import QColor
         hex_color = hex_color.lstrip('#')
         return QColor(int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16))
     
