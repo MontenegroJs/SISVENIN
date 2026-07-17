@@ -5,204 +5,402 @@ POS rápido 3 clics (compatible con App.py + navegación)
 
 from functools import partial
 
-from PySide6.QtCore import Qt, QSize, QTimer, Signal
+from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout,
-    QLineEdit, QListWidget, QListWidgetItem, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QLabel, QDoubleSpinBox,
     QMessageBox, QTableWidget, QTableWidgetItem,
-    QPushButton, QHeaderView, QScrollArea, QFrame, QSplitter
+    QPushButton, QHeaderView, QStackedWidget, QAbstractSpinBox
 )
 from PySide6.QtGui import QFont, QColor
 
 from src.app.base_layout import BaseLayout
+from src.app.controllers.producto_controlador import ProductoControlador
 from src.app.controllers.venta_controlador import VentaControlador
 from src.app.shared.components.sis_button import SisButton
 
-from src.app.shared.components.sis_input import SisInput
-from src.app.controllers.producto_controlador import ProductoControlador
-from src.app.models.producto_modelo import ProductoModelo
-# PARA EL TICKET
-from src.app.views.venta.components.ticket_modal import TicketModal
+# ============================================================
+# 🩹 PARCHE DE COMPATIBILIDAD (monkey patch — no toca producto_vista.py)
+# ------------------------------------------------------------
+
+try:
+    from src.app.views.producto.components.tabla_productos import TablaProductos
+
+    if not hasattr(TablaProductos, "set_items_per_page"):
+        def _set_items_per_page_parche(self, items_per_page):
+            """
+            No-op de compatibilidad: TablaProductos ya recibe items_per_page
+            por constructor: no hay una acción real que ejecutar aquí, solo
+            evita el AttributeError que rompía resaltar_producto().
+            """
+            pass
+
+        TablaProductos.set_items_per_page = _set_items_per_page_parche
+except ImportError:
+    # Si la ruta del componente cambia, no debe romper VentaVista.
+    pass
+
+
+class _SpinBoxPago(QDoubleSpinBox):
+    """
+    QDoubleSpinBox especializado para el campo "Pago con":
+    - Selecciona todo el texto al recibir foco, para poder escribir el
+      monto directamente sin tener que borrar el "0.00" a mano primero.
+    - Si el campo queda vacío (por ejemplo, tras borrar todo) y se
+      presionan las flechas o se pierde el foco, el valor pasa a 0.00
+      en vez de "revivir" el monto que tenía antes de borrarlo.
+    - Como ya no tiene borde propio (vive dentro de un contenedor junto
+      a las flechas ▲▼ personalizadas), le avisa a ese contenedor cuándo
+      pintarse de verde al enfocar, vía la propiedad dinámica "focused".
+    """
+
+    contenedor_focus = None
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        QTimer.singleShot(0, self.selectAll)
+        self._marcar_foco(True)
+
+    def focusOutEvent(self, event):
+        if self.lineEdit().text().strip() == "":
+            self.setValue(0.0)
+        super().focusOutEvent(event)
+        self._marcar_foco(False)
+
+    def stepBy(self, steps):
+        if self.lineEdit().text().strip() in ("", "-"):
+            self.setValue(0.0)
+            return
+        super().stepBy(steps)
+
+    def _marcar_foco(self, activo):
+        if self.contenedor_focus is None:
+            return
+        self.contenedor_focus.setProperty("focused", activo)
+        self.contenedor_focus.style().unpolish(self.contenedor_focus)
+        self.contenedor_focus.style().polish(self.contenedor_focus)
+
 
 class PanelBusqueda(QWidget):
     """
     Panel de búsqueda de productos para el POS.
     Formato: "Nombre – S/ precio (stock: X)"
     """
-    
-    producto_seleccionado = Signal(ProductoModelo)
-    
-    def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__(parent)
-        self.controlador = ProductoControlador()
-        self.timer_busqueda = QTimer()
-        self.timer_busqueda.setSingleShot(True)
-        self.timer_busqueda.timeout.connect(self._ejecutar_busqueda)
-        self._setup_ui()
-    
-    def _setup_ui(self) -> None:
-        layout = QVBoxLayout(self)
-        layout.setSpacing(16)
-        layout.setContentsMargins(0, 0, 0, 0)
-        
-        # Título
-        titulo = QLabel("🔍 Buscar Producto")
-        titulo.setFont(QFont("Roboto", 18, QFont.DemiBold))
-        titulo.setStyleSheet("color: #212121; margin-bottom: 8px;")
-        layout.addWidget(titulo)
-        
-        # Campo de búsqueda
-        self.campo_busqueda = SisInput(placeholder="Buscar por nombre o código de barras...")
-        self.campo_busqueda.textChanged.connect(self._on_texto_cambiado)
-        layout.addWidget(self.campo_busqueda)
-        
-        # Lista de resultados
-        self.lista_resultados = QListWidget()
-        self.lista_resultados.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #E0E0E0;
-                border-radius: 12px;
+
+    # 🔧 TIPOGRAFÍA (mismo patrón de configuración explícita que TablaProductos)
+    FUENTE_FAMILIA = "'Century Gothic', 'Trebuchet MS', 'Segoe UI', sans-serif"
+    FUENTE_BASE_TAMANO = 14
+
+    FUENTE_ETIQUETA_TAMANO = 14
+    FUENTE_ETIQUETA_PESO = 700          # títulos de sección: BÚSQUEDA / CARRITO DE COMPRAS
+
+    FUENTE_PRODUCTO_TAMANO = 15
+    FUENTE_PRODUCTO_PESO = 500          # nombre del producto en la lista
+    FUENTE_PRECIO_PESO = 700            # precio del producto en la lista (negrita)
+
+    FUENTE_TOTAL_TAMANO = 24
+    FUENTE_TOTAL_PESO = 700
+
+    UMBRAL_STOCK_BAJO = 5   # mismo criterio que TablaProductos (stock < 5 = alerta)
+
+    def __init__(self, on_navigate_to_report=None, on_navigate_to_products=None):
+        super().__init__()
+
+        # ================= NAVEGACIÓN (OBLIGATORIO POR APP.PY) =================
+        self.on_navigate_to_report = on_navigate_to_report
+        self.on_navigate_to_products = on_navigate_to_products
+
+        # ================= CONTROLADOR =================
+        self.controlador = VentaControlador()
+        self.controlador_productos = ProductoControlador()
+        self.resultados = []
+
+        # ================= CONFIG VENTANA =================
+        self.setWindowTitle("SISVENIN - POS VENTA")
+        self.resize(1100, 650)
+
+        # ================= ESTILO GENERAL SISVENIN =================
+        self.setStyleSheet(f"""
+            QWidget {{
+                background-color: {BaseLayout.COLOR_FONDO_VENTANA};
+                color: {BaseLayout.COLOR_TEXTO_PRINCIPAL};
+                font-size: {self.FUENTE_BASE_TAMANO}px;
+                font-family: {self.FUENTE_FAMILIA};
+            }}
+
+            QLineEdit {{
+                background-color: {BaseLayout.COLOR_TARJETA};
+                border: 1px solid {BaseLayout.COLOR_BORDE};
                 padding: 8px;
-                background-color: white;
-                min-height: 300px;
-            }
-            QListWidget::item {
-                padding: 12px;
-                border-radius: 8px;
-                margin: 2px 0;
-                font-size: 14px;
-            }
-            QListWidget::item:hover {
-                background-color: #F5F5F5;
-            }
-            QListWidget::item:selected {
-                background-color: #E8F5E9;
-                border-left: 3px solid #2E7D32;
-            }
-        """)
-        self.lista_resultados.itemClicked.connect(self._on_producto_seleccionado)
-        layout.addWidget(self.lista_resultados)
-        
-        # Estado
-        self.estado_label = QLabel("💡 Ingrese un término para buscar")
-        self.estado_label.setFont(QFont("Roboto", 12))
-        self.estado_label.setStyleSheet("color: #757575;")
-        self.estado_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.estado_label)
-    
-    def _on_texto_cambiado(self, texto: str) -> None:
-        self.timer_busqueda.start(300)
-    
-    def _ejecutar_busqueda(self) -> None:
-        termino = self.campo_busqueda.text().strip()
-        
-        if not termino:
-            self.lista_resultados.clear()
-            self.estado_label.setText("💡 Ingrese un término para buscar")
-            self.estado_label.setStyleSheet("color: #757575;")
-            return
-        
-        self.estado_label.setText("⏳ Buscando...")
-        self.estado_label.setStyleSheet("color: #2E7D32;")
-        
-        productos = self.controlador.buscar_rapido_pos(termino, limite=10)
-        self._actualizar_lista(productos)
-    
-    def _actualizar_lista(self, productos: List[ProductoModelo]) -> None:
-        self.lista_resultados.clear()
-        
-        if not productos:
-            self.estado_label.setText("❌ No se encontraron productos")
-            self.estado_label.setStyleSheet("color: #D32F2F;")
-            return
-        
-        self.estado_label.setText(f"📦 {len(productos)} productos encontrados")
-        self.estado_label.setStyleSheet("color: #2E7D32;")
-        
-        for producto in productos:
-            # Formato: "Nombre – S/ precio (stock: X)"
-            if producto.stock <= 0:
-                stock_texto = f"stock: {producto.stock} - SIN STOCK"
-                color = "#9E9E9E"
-            elif producto.stock < 5:
-                stock_texto = f"stock: {producto.stock} ⚠️"
-                color = "#D32F2F"
-            else:
-                stock_texto = f"stock: {producto.stock}"
-                color = "#212121"
-            
-            item_text = f"{producto.nombre} – S/ {producto.precio_venta:.2f} ({stock_texto})"
-            item = QListWidgetItem(item_text)
-            item.setData(Qt.ItemDataRole.UserRole, producto)
-            item.setForeground(Qt.GlobalColor.black if color == "#212121" else self._color_from_hex(color))
-            self.lista_resultados.addItem(item)
-    
-    def _color_from_hex(self, hex_color: str):
-        """Convierte hex a QColor"""
-        hex_color = hex_color.lstrip('#')
-        return QColor(int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16))
-    
-    def _on_producto_seleccionado(self, item: QListWidgetItem) -> None:
-        producto = item.data(Qt.ItemDataRole.UserRole)
-        if producto and producto.stock > 0:
-            self.producto_seleccionado.emit(producto)
-            self.campo_busqueda.clear()
-            self.lista_resultados.clear()
-            self.estado_label.setText("✅ Producto agregado al carrito")
-            self.estado_label.setStyleSheet("color: #2E7D32;")
-            QTimer.singleShot(2000, self._resetear_estado)
-        elif producto and producto.stock <= 0:
-            self.estado_label.setText("❌ Producto sin stock disponible")
-            self.estado_label.setStyleSheet("color: #D32F2F;")
-            QTimer.singleShot(2000, self._resetear_estado)
-    
-    def _resetear_estado(self) -> None:
-        if not self.campo_busqueda.text().strip():
-            self.estado_label.setText("💡 Ingrese un término para buscar")
-            self.estado_label.setStyleSheet("color: #757575;")
+                border-radius: {BaseLayout.BORDER_RADIUS_TARJETA}px;
+            }}
 
+            QListWidget {{
+                background-color: {BaseLayout.COLOR_TARJETA};
+                border: 1px solid {BaseLayout.COLOR_BORDE};
+                border-radius: {BaseLayout.BORDER_RADIUS_TARJETA}px;
+                outline: 0;
+            }}
 
-class PanelAlertasStock(QWidget):
-    """Panel de alertas de stock bajo (lado izquierdo, debajo de búsqueda)"""
-    
-    producto_clickeado = Signal(int)  # Emite el ID del producto
-    
-    def __init__(self, parent: Optional[QWidget] = None):
-        super().__init__(parent)
-        self.controlador = ProductoControlador()
-        self._setup_ui()
-        self._cargar_alertas()
-    
-    def _setup_ui(self):
-        layout = QVBoxLayout(self)
-        layout.setSpacing(8)
-        layout.setContentsMargins(0, 16, 0, 0)
-        
-        # Título
-        titulo = QLabel("⚠️ Alertas rápidas")
-        titulo.setFont(QFont("Roboto", 14, QFont.DemiBold))
-        titulo.setStyleSheet("color: #D32F2F; margin-top: 8px;")
-        layout.addWidget(titulo)
-        
-        # Lista de alertas
-        self.lista_alertas = QListWidget()
-        self.lista_alertas.setMaximumHeight(120)
-        self.lista_alertas.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #FFEBEE;
-                border-radius: 8px;
-                padding: 4px;
-                background-color: #FFEBEE;
-            }
-            QListWidget::item {
+            QListWidget::item {{
+                padding: 4px 8px;
+                border-bottom: 1px solid {BaseLayout.COLOR_BORDE};
+            }}
+
+            QListWidget::item:hover {{
+                background-color: #F1F8E9;
+            }}
+
+            QListWidget::item:selected {{
+                background-color: #C8E6C9;
+                border-left: 4px solid {BaseLayout.COLOR_PRIMARIO};
+            }}
+
+            QTableWidget {{
+                background-color: {BaseLayout.COLOR_TARJETA};
+                border: 1px solid {BaseLayout.COLOR_BORDE};
+                border-radius: {BaseLayout.BORDER_RADIUS_TARJETA}px;
+                gridline-color: {BaseLayout.COLOR_BORDE};
+                outline: 0;
+            }}
+
+            QTableWidget::item {{
+                padding: 10px 8px;
+                border: none;
+            }}
+
+            QTableWidget::item:focus {{
+                border: none;
+                outline: none;
+            }}
+
+            QTableWidget::item:selected {{
+                background-color: {BaseLayout.COLOR_FONDO_VENTANA};
+                color: {BaseLayout.COLOR_TEXTO_PRINCIPAL};
+            }}
+
+            QHeaderView::section {{
+                background-color: {BaseLayout.COLOR_FONDO_VENTANA};
+                color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
                 padding: 6px;
+                border: none;
+                border-bottom: 1px solid {BaseLayout.COLOR_BORDE};
+                font-weight: bold;
+            }}
+
+            QPushButton#btnEliminarFila {{
+                background-color: transparent;
+                border: none;
+                color: {BaseLayout.COLOR_PELIGRO};
+                font-size: 15px;
+                padding: 0px;
+            }}
+
+            QPushButton#btnEliminarFila:hover {{
+                color: {BaseLayout.COLOR_PELIGRO_HOVER};
+            }}
+
+            QPushButton#btnCantidad {{
+                background-color: {BaseLayout.COLOR_FONDO_VENTANA};
+                border: 1px solid {BaseLayout.COLOR_BORDE};
                 border-radius: 4px;
-                color: #D32F2F;
-                font-size: 12px;
-            }
-            QListWidget::item:hover {
-                background-color: #FFCDD2;
-            }
+                font-weight: bold;
+                color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
+            }}
+
+            QPushButton#btnCantidad:hover {{
+                background-color: {BaseLayout.COLOR_TARJETA};
+                color: {BaseLayout.COLOR_PRIMARIO};
+            }}
+
+            QPushButton#btnAlerta {{
+                background-color: transparent;
+                border: none;
+                color: #E65100;
+                text-align: left;
+                padding: 2px 0px;
+            }}
+
+            QPushButton#btnAlerta:hover {{
+                text-decoration: underline;
+                color: #BF360C;
+            }}
+        """)
+
+        # ================= LAYOUT PRINCIPAL =================
+        self.layout_principal = QVBoxLayout()
+        self.layout_principal.setContentsMargins(20, 16, 20, 20)
+        self.layout_principal.setSpacing(14)
+        self.setLayout(self.layout_principal)
+
+        fila_paneles = QHBoxLayout()
+        fila_paneles.setSpacing(16)
+        self._construir_panel_productos(fila_paneles)
+        self._construir_panel_carrito(fila_paneles)
+        self.layout_principal.addLayout(fila_paneles)
+
+        self._construir_barra_pago()
+        self._construir_footer()
+
+        # ================= EVENTOS =================
+        self.input_busqueda.textChanged.connect(self.buscar_productos)
+        self.lista_productos.itemClicked.connect(self._on_producto_clic)
+        self.btn_cancelar.clicked.connect(self.cancelar_venta)
+        self.btn_finalizar.clicked.connect(self.finalizar_venta)
+        self.input_pago.valueChanged.connect(self.calcular_vuelto)
+        self.input_pago.lineEdit().textChanged.connect(self.calcular_vuelto)
+
+        # ================= ESTADO INICIAL =================
+        self.buscar_productos()
+        self.actualizar_tabla()
+        self.actualizar_total()
+        self._cargar_alertas()
+
+        print("✅ VentaVista cargada correctamente")
+
+    # ======================================================
+    # 🧱 CONSTRUCCIÓN DE SECCIONES DE LA UI
+    # ======================================================
+    def _construir_panel_productos(self, contenedor_padre):
+        """🟢 PANEL IZQUIERDO: búsqueda + resultados + alertas de stock."""
+        self.panel_productos = QVBoxLayout()
+        self.panel_productos.setSpacing(8)
+
+        self.lbl_productos = QLabel("🔍  BÚSQUEDA")
+        self.lbl_productos.setStyleSheet(f"""
+            font-size: {self.FUENTE_ETIQUETA_TAMANO}px;
+            font-weight: {self.FUENTE_ETIQUETA_PESO};
+            color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
+        """)
+
+        self.input_busqueda = QLineEdit()
+        self.input_busqueda.setPlaceholderText(" Buscar por nombre o código...")
+
+        self.lbl_resultados = QLabel("RESULTADOS (clic para agregar)")
+        self.lbl_resultados.setStyleSheet(f"color: {BaseLayout.COLOR_TEXTO_SECUNDARIO}; font-size: 12px;")
+
+        self.lista_productos = QListWidget()
+
+        self.panel_productos.addWidget(self.lbl_productos)
+        self.panel_productos.addWidget(self.input_busqueda)
+        self.panel_productos.addWidget(self.lbl_resultados)
+        self.panel_productos.addWidget(self.lista_productos)
+
+        self._construir_alertas_stock()
+        self.panel_productos.addWidget(self.widget_alertas)
+
+        contenedor_padre.addLayout(self.panel_productos, 2)
+
+    def _construir_alertas_stock(self):
+        """Caja amarilla de 'Alertas rápidas' de stock bajo (se oculta sola si no aplica)."""
+        self.widget_alertas = QWidget()
+        self.widget_alertas.setStyleSheet("""
+            background-color: #FFF8E1;
+            border: 1px solid #FFE082;
+            border-radius: 8px;
+        """)
+
+        vbox = QVBoxLayout(self.widget_alertas)
+        vbox.setContentsMargins(12, 10, 12, 10)
+        vbox.setSpacing(4)
+
+        lbl_titulo = QLabel("⚠️  Alertas rápidas")
+        lbl_titulo.setStyleSheet("color: #F57C00; font-weight: 700;")
+        vbox.addWidget(lbl_titulo)
+
+        self.layout_alertas = QVBoxLayout()
+        self.layout_alertas.setSpacing(2)
+        vbox.addLayout(self.layout_alertas)
+
+        self.widget_alertas.setVisible(False)
+
+    def _construir_panel_carrito(self, contenedor_padre):
+        """🟢 PANEL DERECHO: tabla del carrito + total."""
+        self.panel_carrito = QVBoxLayout()
+        self.panel_carrito.setSpacing(8)
+
+        header_carrito = QHBoxLayout()
+        self.lbl_carrito = QLabel("🛒  CARRITO DE COMPRAS")
+        self.lbl_carrito.setStyleSheet(f"""
+            font-size: {self.FUENTE_ETIQUETA_TAMANO}px;
+            font-weight: {self.FUENTE_ETIQUETA_PESO};
+            color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
+        """)
+
+        self.lbl_contador = QLabel("Productos: 0")
+        self.lbl_contador.setStyleSheet(f"color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};")
+        self.lbl_contador.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        header_carrito.addWidget(self.lbl_carrito)
+        header_carrito.addWidget(self.lbl_contador)
+
+        self.tabla = QTableWidget()
+        self.tabla.setColumnCount(5)
+        self.tabla.setHorizontalHeaderLabels([
+            "Producto", "Cantidad", "Precio", "Subtotal", ""
+        ])
+        self.tabla.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        anchos_columnas = {1: 110, 2: 90, 3: 100, 4: 48}
+        for col, ancho in anchos_columnas.items():
+            self.tabla.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
+            self.tabla.setColumnWidth(col, ancho)
+        self.tabla.verticalHeader().setVisible(False)
+        self.tabla.verticalHeader().setDefaultSectionSize(52)
+        self.tabla.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.tabla.setSelectionBehavior(QTableWidget.SelectRows)
+        self.tabla.setFocusPolicy(Qt.NoFocus)
+
+        # Estado vacío del carrito (se muestra cuando no hay productos)
+        self.widget_carrito_vacio = QWidget()
+        vbox_vacio = QVBoxLayout(self.widget_carrito_vacio)
+        vbox_vacio.setAlignment(Qt.AlignCenter)
+        lbl_icono_vacio = QLabel("🛒")
+        lbl_icono_vacio.setAlignment(Qt.AlignCenter)
+        lbl_icono_vacio.setStyleSheet("font-size: 40px;")
+        lbl_texto_vacio = QLabel("El carrito está vacío.\nBusca productos para agregar.")
+        lbl_texto_vacio.setAlignment(Qt.AlignCenter)
+        lbl_texto_vacio.setStyleSheet(f"color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};")
+        vbox_vacio.addWidget(lbl_icono_vacio)
+        vbox_vacio.addWidget(lbl_texto_vacio)
+
+        self.lbl_total = QLabel("TOTAL: S/ 0.00")
+        self.lbl_total.setStyleSheet(f"""
+            font-size: {self.FUENTE_TOTAL_TAMANO}px;
+            font-weight: {self.FUENTE_TOTAL_PESO};
+            color: {BaseLayout.COLOR_PRIMARIO};
+        """)
+        self.lbl_total.setAlignment(Qt.AlignRight)
+
+        self.panel_carrito.addLayout(header_carrito)
+
+        self.stack_carrito = QStackedWidget()
+        self.stack_carrito.setMinimumHeight(320)
+        self.stack_carrito.addWidget(self.tabla)
+        self.stack_carrito.addWidget(self.widget_carrito_vacio)
+        self.panel_carrito.addWidget(self.stack_carrito)
+
+        self.panel_carrito.addWidget(self.lbl_total)
+
+        contenedor_padre.addLayout(self.panel_carrito, 3)
+
+    def _construir_barra_pago(self):
+        """Tarjeta horizontal: PAGO CON | VUELTO, debajo de los dos paneles."""
+        self.widget_pago = QWidget()
+        self.widget_pago.setStyleSheet(f"""
+            background-color: {BaseLayout.COLOR_TARJETA};
+            border: 1px solid {BaseLayout.COLOR_BORDE};
+            border-radius: {BaseLayout.BORDER_RADIUS_TARJETA}px;
+        """)
+
+        fila = QHBoxLayout(self.widget_pago)
+        fila.setContentsMargins(16, 12, 16, 12)
+        fila.setSpacing(10)
+
+        self.lbl_pago = QLabel("💰  PAGO CON:  S/")
+        self.lbl_pago.setStyleSheet(f"""
+            font-weight: {self.FUENTE_ETIQUETA_PESO};
+            color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
         """)
         self.lista_alertas.itemClicked.connect(self._on_alerta_clickeada)
         layout.addWidget(self.lista_alertas)
@@ -232,267 +430,470 @@ class PanelAlertasStock(QWidget):
         """Refresca las alertas"""
         self._cargar_alertas()
 
+        self.input_pago = _SpinBoxPago()
+        self.input_pago.setDecimals(2)
+        self.input_pago.setSingleStep(0.5)
+        self.input_pago.setMinimum(0.0)
+        self.input_pago.setMaximum(99_999.99)
+        self.input_pago.setValue(0.0)
+        self.input_pago.setAlignment(Qt.AlignRight)
+        # Ocultamos las flechas nativas: en Windows (estilo nativo) ignoran
+        # cualquier color que le pongamos por QSS/paleta. Las reemplazamos
+        # por botones propios (▲/▼) más abajo, con color 100% controlado.
+        self.input_pago.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        self.input_pago.setStyleSheet(f"""
+            QDoubleSpinBox {{
+                font-size: 16px;
+                padding: 6px 8px;
+                background-color: transparent;
+                border: none;
+            }}
+        """)
 
-class VentaVista(QWidget):
-    """Vista principal del Punto de Venta (POS) - Basado en modelo Figma"""
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.carrito: List[ProductoModelo] = []
-        self.controlador = ProductoControlador()
-        self.setup_ui()
-    
-    def setup_ui(self):
-        layout = QHBoxLayout(self)
-        layout.setSpacing(24)
-        layout.setContentsMargins(24, 24, 24, 24)
-        
-        splitter = QSplitter(Qt.Orientation.Horizontal)
-        
-        # ========== PANEL IZQUIERDO (40%) ==========
-        panel_izquierdo = QWidget()
-        left_layout = QVBoxLayout(panel_izquierdo)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.setSpacing(0)
-        
-        # Búsqueda
-        self.panel_busqueda = PanelBusqueda()
-        self.panel_busqueda.producto_seleccionado.connect(self.agregar_al_carrito)
-        left_layout.addWidget(self.panel_busqueda)
-        
-        # Alertas de stock
-        self.panel_alertas = PanelAlertasStock()
-        self.panel_alertas.producto_clickeado.connect(self._ir_a_producto)
-        left_layout.addWidget(self.panel_alertas)
-        
-        left_layout.addStretch()
-        
-        # ========== PANEL DERECHO (60%) ==========
-        panel_derecho = QWidget()
-        right_layout = QVBoxLayout(panel_derecho)
-        right_layout.setSpacing(16)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # Título del carrito
-        self.carrito_titulo = QLabel("🛒 Carrito (0 productos)")
-        self.carrito_titulo.setFont(QFont("Roboto", 18, QFont.DemiBold))
-        self.carrito_titulo.setStyleSheet("color: #212121;")
-        right_layout.addWidget(self.carrito_titulo)
-        
-        # Lista del carrito (scroll)
-        scroll_carrito = QScrollArea()
-        scroll_carrito.setWidgetResizable(True)
-        scroll_carrito.setFrameShape(QFrame.NoFrame)
-        scroll_carrito.setStyleSheet("background-color: transparent; border: none;")
-        
-        self.carrito_contenido = QWidget()
-        self.carrito_layout = QVBoxLayout(self.carrito_contenido)
-        self.carrito_layout.setSpacing(8)
-        self.carrito_layout.setContentsMargins(0, 0, 0, 0)
-        self.carrito_layout.addStretch()
-        
-        scroll_carrito.setWidget(self.carrito_contenido)
-        right_layout.addWidget(scroll_carrito, 1)
-        
-        # TOTAL
-        self.total_label = QLabel("TOTAL: S/ 0.00")
-        self.total_label.setFont(QFont("Roboto", 28, QFont.Bold))
-        self.total_label.setStyleSheet("color: #2E7D32; padding: 16px; background-color: #E8F5E9; border-radius: 12px;")
-        self.total_label.setAlignment(Qt.AlignmentFlag.AlignRight)
-        right_layout.addWidget(self.total_label)
-        
-        # PAGO CON y VUELTO (fila horizontal)
-        pago_layout = QHBoxLayout()
-        pago_layout.setSpacing(16)
-        
-        # PAGO CON
-        pago_label = QLabel("PAGO CON:")
-        pago_label.setFont(QFont("Roboto", 14, QFont.DemiBold))
-        pago_label.setStyleSheet("color: #212121;")
-        pago_layout.addWidget(pago_label)
-        
-        self.pago_input = SisInput(placeholder="0.00")
-        self.pago_input.setFixedWidth(150)
-        self.pago_input.textChanged.connect(self._calcular_vuelto)
-        pago_layout.addWidget(self.pago_input)
-        
-        pago_layout.addStretch()
-        
-        # VUELTO
-        vuelto_label = QLabel("VUELTO:")
-        vuelto_label.setFont(QFont("Roboto", 14, QFont.DemiBold))
-        vuelto_label.setStyleSheet("color: #212121;")
-        pago_layout.addWidget(vuelto_label)
-        
-        self.vuelto_label = QLabel("S/ 0.00")
-        self.vuelto_label.setFont(QFont("Roboto", 20, QFont.Bold))
-        self.vuelto_label.setStyleSheet("color: #2E7D32;")
-        self.vuelto_label.setMinimumWidth(120)
-        pago_layout.addWidget(self.vuelto_label)
-        
-        right_layout.addLayout(pago_layout)
-        
-        # Botones (CERRAR CAJA y CONFIRMAR VENTA)
-        botones_layout = QHBoxLayout()
-        botones_layout.setSpacing(16)
-        
-        # Botón CERRAR CAJA (rojo)
-        self.btn_cerrar_caja = QPushButton("🔒 CERRAR CAJA")
-        self.btn_cerrar_caja.setMinimumHeight(48)
-        self.btn_cerrar_caja.setCursor(Qt.PointingHandCursor)
-        self.btn_cerrar_caja.setStyleSheet("""
-            QPushButton {
-                background-color: #D32F2F;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 12px 24px;
-                font-size: 16px;
-                font-weight: 600;
-            }
-            QPushButton:hover {
-                background-color: #C62828;
-            }
+        # Contenedor: input de pago + flechas propias, con el borde/fondo
+        # que antes tenía el QDoubleSpinBox solo, para que se vea como un
+        # único campo.
+        contenedor_pago = QWidget()
+        contenedor_pago.setObjectName("contenedorPago")
+        contenedor_pago.setStyleSheet(f"""
+            QWidget#contenedorPago {{
+                background-color: {BaseLayout.COLOR_TARJETA};
+                border: 1px solid {BaseLayout.COLOR_BORDE};
+                border-radius: {BaseLayout.BORDER_RADIUS_TARJETA}px;
+            }}
+            QWidget#contenedorPago[focused="true"] {{
+                border: 1px solid {BaseLayout.COLOR_PRIMARIO};
+            }}
         """)
-        self.btn_cerrar_caja.clicked.connect(self._cerrar_caja)
-        botones_layout.addWidget(self.btn_cerrar_caja)
-        
-        # Botón CONFIRMAR VENTA (verde)
-        self.btn_confirmar = QPushButton("✅ CONFIRMAR VENTA")
-        self.btn_confirmar.setMinimumHeight(48)
-        self.btn_confirmar.setCursor(Qt.PointingHandCursor)
-        self.btn_confirmar.setStyleSheet("""
-            QPushButton {
-                background-color: #2E7D32;
-                color: white;
+        fila_input_pago = QHBoxLayout(contenedor_pago)
+        fila_input_pago.setContentsMargins(0, 0, 0, 0)
+        fila_input_pago.setSpacing(0)
+        fila_input_pago.addWidget(self.input_pago)
+
+        flechas_pago = QWidget()
+        flechas_pago.setStyleSheet(f"border-left: 1px solid {BaseLayout.COLOR_BORDE};")
+        col_flechas = QVBoxLayout(flechas_pago)
+        col_flechas.setContentsMargins(0, 0, 0, 0)
+        col_flechas.setSpacing(0)
+
+        btn_pago_subir = QPushButton("▲")
+        btn_pago_subir.setObjectName("btnFlechaPago")
+        btn_pago_subir.setFixedSize(20, 15)
+        btn_pago_subir.setCursor(Qt.PointingHandCursor)
+        btn_pago_subir.clicked.connect(self.input_pago.stepUp)
+
+        btn_pago_bajar = QPushButton("▼")
+        btn_pago_bajar.setObjectName("btnFlechaPago")
+        btn_pago_bajar.setFixedSize(20, 15)
+        btn_pago_bajar.setCursor(Qt.PointingHandCursor)
+        btn_pago_bajar.clicked.connect(self.input_pago.stepDown)
+
+        col_flechas.addWidget(btn_pago_subir)
+        col_flechas.addWidget(btn_pago_bajar)
+        fila_input_pago.addWidget(flechas_pago)
+
+        contenedor_pago.setStyleSheet(contenedor_pago.styleSheet() + f"""
+            QPushButton#btnFlechaPago {{
+                background-color: {BaseLayout.COLOR_FONDO_VENTANA};
                 border: none;
-                border-radius: 8px;
-                padding: 12px 24px;
-                font-size: 16px;
-                font-weight: 600;
-            }
-            QPushButton:hover {
-                background-color: #1B5E20;
-            }
+                color: {BaseLayout.COLOR_PRIMARIO};
+                font-size: 8px;
+                padding: 0px;
+            }}
+            QPushButton#btnFlechaPago:hover {{
+                background-color: {BaseLayout.COLOR_TARJETA};
+                color: {BaseLayout.COLOR_PRIMARIO};
+            }}
         """)
-        self.btn_confirmar.clicked.connect(self._confirmar_venta)
-        botones_layout.addWidget(self.btn_confirmar)
-        
-        right_layout.addLayout(botones_layout)
-        
-        # Agregar paneles al splitter
-        splitter.addWidget(panel_izquierdo)
-        splitter.addWidget(panel_derecho)
-        splitter.setSizes([400, 600])
-        
-        layout.addWidget(splitter)
-    
-    def agregar_al_carrito(self, producto: ProductoModelo):
-        """Agrega un producto al carrito"""
-        self.carrito.append(producto)
-        self._actualizar_carrito()
-        self._actualizar_total()
-        self.panel_alertas.refresh()  # Refrescar alertas (puede cambiar stock)
-    
-    def _actualizar_carrito(self):
-        """Actualiza la lista visual del carrito"""
-        # Limpiar layout (excepto el stretch)
-        while self.carrito_layout.count() > 1:
-            item = self.carrito_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-        
-        # Agrupar productos iguales para mostrar cantidades
-        productos_agrupados = {}
-        for p in self.carrito:
-            if p.id not in productos_agrupados:
-                productos_agrupados[p.id] = {"producto": p, "cantidad": 0}
-            productos_agrupados[p.id]["cantidad"] += 1
-        
-        for data in productos_agrupados.values():
-            producto = data["producto"]
-            cantidad = data["cantidad"]
-            
-            item_widget = QWidget()
-            item_layout = QHBoxLayout(item_widget)
-            item_layout.setContentsMargins(8, 8, 8, 8)
-            item_layout.setSpacing(12)
-            
-            # Nombre y cantidad
-            nombre_label = QLabel(f"{producto.nombre} x{cantidad}")
-            nombre_label.setFont(QFont("Roboto", 14))
-            nombre_label.setStyleSheet("color: #212121;")
-            item_layout.addWidget(nombre_label)
-            
-            item_layout.addStretch()
-            
-            # Precio
-            subtotal = producto.precio_venta * cantidad
-            precio_label = QLabel(f"S/ {subtotal:.2f}")
-            precio_label.setFont(QFont("Roboto", 14, QFont.DemiBold))
-            precio_label.setStyleSheet("color: #2E7D32;")
-            item_layout.addWidget(precio_label)
-            
-            # Botón eliminar
-            btn_eliminar = QPushButton("✖")
-            btn_eliminar.setFixedSize(30, 30)
-            btn_eliminar.setCursor(Qt.PointingHandCursor)
-            btn_eliminar.setStyleSheet("""
-                QPushButton {
-                    background-color: transparent;
-                    color: #D32F2F;
-                    border: 1px solid #E0E0E0;
-                    border-radius: 8px;
-                    font-size: 14px;
-                }
-                QPushButton:hover {
-                    background-color: #FFEBEE;
-                }
-            """)
-            btn_eliminar.clicked.connect(lambda checked, pid=producto.id: self._eliminar_producto(pid))
-            item_layout.addWidget(btn_eliminar)
-            
-            self.carrito_layout.insertWidget(self.carrito_layout.count() - 1, item_widget)
-        
-        # Actualizar título
-        self.carrito_titulo.setText(f"🛒 Carrito ({len(self.carrito)} productos)")
-    
-    def _eliminar_producto(self, producto_id: int):
-        """Elimina un producto del carrito (una unidad)"""
-        for i, p in enumerate(self.carrito):
-            if p.id == producto_id:
-                self.carrito.pop(i)
-                break
-        self._actualizar_carrito()
-        self._actualizar_total()
-        self._calcular_vuelto()
-    
-    def _actualizar_total(self):
-        """Actualiza el total del carrito"""
-        total = sum(p.precio_venta for p in self.carrito)
-        self.total_label.setText(f"TOTAL: S/ {total:.2f}")
-    
-    def _calcular_vuelto(self):
-        """Calcula el vuelto en tiempo real"""
-        try:
-            pago = float(self.pago_input.text() or "0")
-        except ValueError:
-            pago = 0
-        
-        total = sum(p.precio_venta for p in self.carrito)
-        vuelto = pago - total
-        
-        if vuelto >= 0:
-            self.vuelto_label.setText(f"S/ {vuelto:.2f}")
-            self.vuelto_label.setStyleSheet("color: #2E7D32; font-size: 20px; font-weight: bold;")
+
+        self.input_pago.contenedor_focus = contenedor_pago
+
+        separador = QLabel("|")
+        separador.setStyleSheet(f"color: {BaseLayout.COLOR_BORDE};")
+
+        self.lbl_vuelto_titulo = QLabel("💵  VUELTO:")
+        self.lbl_vuelto_titulo.setStyleSheet(f"""
+            font-weight: {self.FUENTE_ETIQUETA_PESO};
+            color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
+        """)
+
+        self.lbl_vuelto_valor = QLabel("Ingrese monto recibido")
+        self._estilo_vuelto_neutro()
+
+        self.lbl_error_pago = QLabel("")
+        self.lbl_error_pago.setStyleSheet(f"color: {BaseLayout.COLOR_PELIGRO}; font-weight: bold;")
+
+        fila.addWidget(self.lbl_pago)
+        fila.addWidget(contenedor_pago)
+        fila.addWidget(separador)
+        fila.addWidget(self.lbl_vuelto_titulo)
+        fila.addWidget(self.lbl_vuelto_valor)
+        fila.addWidget(self.lbl_error_pago)
+        fila.addStretch()
+
+        self.layout_principal.addWidget(self.widget_pago)
+
+    def _construir_footer(self):
+        """Botones de acción al pie: Cancelar / Finalizar venta."""
+        footer = QHBoxLayout()
+
+        self.btn_cancelar = SisButton("🧾 Cancelar", variant="secondary")
+        self.btn_finalizar = SisButton("✅ Finalizar venta", variant="primary")
+
+        footer.addWidget(self.btn_cancelar)
+        footer.addStretch()
+        footer.addWidget(self.btn_finalizar)
+
+        self.layout_principal.addLayout(footer)
+
+    # ======================================================
+    # 🔎 BUSCAR PRODUCTOS
+    # ======================================================
+    def buscar_productos(self):
+        texto = self.input_busqueda.text().strip()
+
+        self.lista_productos.clear()
+
+        if not texto:
+            self.resultados = []
+            self._mostrar_placeholder_busqueda("Empieza a escribir para buscar...")
+            return
+
+        self.resultados = self.controlador.buscar_productos(texto)
+
+        if not self.resultados:
+            self._mostrar_placeholder_busqueda("No se encontraron productos")
+            return
+
+        for p in self.resultados:
+            item = QListWidgetItem()
+            item.setSizeHint(QSize(0, 56))
+            if p.stock <= 0:
+                item.setFlags(Qt.NoItemFlags)   # sin stock: no se puede agregar
+            self.lista_productos.addItem(item)
+            self.lista_productos.setItemWidget(item, self._crear_item_producto(p))
+
+    def _mostrar_placeholder_busqueda(self, texto):
+        item = QListWidgetItem(texto)
+        item.setFlags(Qt.NoItemFlags)
+        item.setTextAlignment(Qt.AlignCenter)
+        item.setForeground(QColor(BaseLayout.COLOR_TEXTO_SECUNDARIO))
+        self.lista_productos.addItem(item)
+
+    def _crear_item_producto(self, producto):
+        """
+        Widget de fila: • nombre — S/ precio (stock: N)
+        El stock se colorea según su nivel; si está en 0, la fila se tacha
+        y queda deshabilitada (ver buscar_productos).
+        """
+        contenedor = QWidget()
+        contenedor.setStyleSheet("background: transparent;")
+
+        fila = QHBoxLayout(contenedor)
+        fila.setContentsMargins(4, 0, 4, 0)
+
+        stock = producto.stock
+        sin_stock = stock <= 0
+
+        if sin_stock:
+            color_stock = BaseLayout.COLOR_PELIGRO
+            texto = f"<s>• {producto.nombre} (stock: {stock})</s>"
         else:
-            self.vuelto_label.setText(f"S/ {vuelto:.2f}")
-            self.vuelto_label.setStyleSheet("color: #D32F2F; font-size: 20px; font-weight: bold;")
-    
-    def _confirmar_venta(self) -> None:
-        """Confirma la venta y genera el ticket"""
-        if not self.carrito:
-            self._mostrar_mensaje_temporal("❌ No hay productos en el carrito")
+            color_stock = "#FF9800" if stock < self.UMBRAL_STOCK_BAJO else BaseLayout.COLOR_TEXTO_SECUNDARIO
+            texto = (
+                f"• {producto.nombre} — "
+                f"<span style='color:{BaseLayout.COLOR_PRIMARIO}; font-weight:700;'>"
+                f"S/ {producto.precio_venta:.2f}</span> "
+                f"<span style='color:{color_stock};'>(stock: {stock})</span>"
+            )
+
+        lbl = QLabel(texto)
+        lbl.setTextFormat(Qt.RichText)
+        lbl.setStyleSheet(f"""
+            font-family: {self.FUENTE_FAMILIA};
+            font-size: {self.FUENTE_PRODUCTO_TAMANO}px;
+            font-weight: {self.FUENTE_PRODUCTO_PESO};
+            color: {BaseLayout.COLOR_TEXTO_PRINCIPAL};
+        """)
+
+        fila.addWidget(lbl)
+        fila.addStretch()
+
+        return contenedor
+
+    # ======================================================
+    # ➕ AGREGAR PRODUCTO (clic directo en el resultado)
+    # ======================================================
+    def _on_producto_clic(self, item):
+        row = self.lista_productos.row(item)
+
+        if row < 0 or row >= len(self.resultados):
+            return
+
+        producto = self.resultados[row]
+
+        fila_existente = self._buscar_fila_en_carrito(producto)
+        if fila_existente is not None:
+            # El producto ya está en el carrito: solo se incrementa la cantidad
+            self.cambiar_cantidad(fila_existente, 1)
+            return
+
+        self.controlador.agregar_producto(producto)
+
+        self.actualizar_tabla()
+        self.actualizar_total()
+
+    def _buscar_fila_en_carrito(self, producto):
+        """
+        Busca si el producto ya está en el carrito (por id, o por nombre si
+        el detalle no guarda id). Devuelve el índice de la fila o None.
+        """
+        detalle = self.controlador.venta.detalle
+        producto_id = getattr(producto, "id", None)
+
+        for i, item in enumerate(detalle):
+            try:
+                item_id = self._obtener_atributo(item, "id")
+            except (KeyError, AttributeError):
+                item_id = None
+
+            if producto_id is not None and item_id is not None:
+                if item_id == producto_id:
+                    return i
+                continue
+
+            try:
+                item_nombre = self._obtener_atributo(item, "nombre")
+            except (KeyError, AttributeError):
+                item_nombre = None
+
+            if item_nombre is not None and item_nombre == producto.nombre:
+                return i
+
+        return None
+
+    # ======================================================
+    # 🧾 ACTUALIZAR TABLA CARRITO
+    # ======================================================
+    def actualizar_tabla(self):
+        detalle = self.controlador.obtener_detalle()
+        vacio = len(detalle) == 0
+
+        self.stack_carrito.setCurrentWidget(self.widget_carrito_vacio if vacio else self.tabla)
+        self.tabla.setRowCount(len(detalle))
+
+        for i, item in enumerate(detalle):
+            self.tabla.setItem(i, 0, QTableWidgetItem(item["nombre"]))
+            self.tabla.setCellWidget(i, 1, self._crear_widget_cantidad(i, item["cantidad"]))
+            self.tabla.setItem(i, 2, QTableWidgetItem(f"S/ {item['precio']:.2f}"))
+            self.tabla.setItem(i, 3, QTableWidgetItem(f"S/ {item['subtotal']:.2f}"))
+
+            btn_eliminar_fila = QPushButton("🗑️")
+            btn_eliminar_fila.setObjectName("btnEliminarFila")
+            btn_eliminar_fila.setCursor(Qt.PointingHandCursor)
+            btn_eliminar_fila.clicked.connect(partial(self.eliminar_producto, i))
+            self.tabla.setCellWidget(i, 4, btn_eliminar_fila)
+
+        self.lbl_contador.setText(f"Productos: {len(detalle)}")
+
+    def _crear_widget_cantidad(self, row, cantidad):
+        """Control − [cantidad] + para editar la cantidad directamente en la fila."""
+        contenedor = QWidget()
+        fila = QHBoxLayout(contenedor)
+        fila.setContentsMargins(0, 0, 0, 0)
+        fila.setSpacing(6)
+        fila.setAlignment(Qt.AlignCenter)
+
+        btn_menos = QPushButton("−")
+        btn_menos.setObjectName("btnCantidad")
+        btn_menos.setFixedSize(24, 24)
+        btn_menos.setCursor(Qt.PointingHandCursor)
+        btn_menos.clicked.connect(partial(self.cambiar_cantidad, row, -1))
+
+        lbl_cantidad = QLabel(str(cantidad))
+        lbl_cantidad.setFixedWidth(20)
+        lbl_cantidad.setAlignment(Qt.AlignCenter)
+        lbl_cantidad.setStyleSheet("font-weight: 600;")
+
+        btn_mas = QPushButton("+")
+        btn_mas.setObjectName("btnCantidad")
+        btn_mas.setFixedSize(24, 24)
+        btn_mas.setCursor(Qt.PointingHandCursor)
+        btn_mas.clicked.connect(partial(self.cambiar_cantidad, row, 1))
+
+        fila.addWidget(btn_menos)
+        fila.addWidget(lbl_cantidad)
+        fila.addWidget(btn_mas)
+
+        return contenedor
+
+    # ======================================================
+    # 🔢 CAMBIAR CANTIDAD (+ / − desde la fila del carrito)
+    # ======================================================
+    def cambiar_cantidad(self, row, delta):
+        detalle = self.controlador.venta.detalle
+
+        if row < 0 or row >= len(detalle):
+            return
+
+        item = detalle[row]
+        cantidad_actual = self._obtener_atributo(item, "cantidad")
+        nueva_cantidad = cantidad_actual + delta
+
+        if nueva_cantidad <= 0:
+            self.eliminar_producto(row)
+            return
+
+        precio = self._obtener_atributo(item, "precio")
+        self._asignar_atributo(item, "cantidad", nueva_cantidad)
+        self._asignar_atributo(item, "subtotal", precio * nueva_cantidad)
+
+        self.controlador.venta.calcular_total()
+        self.actualizar_tabla()
+        self.actualizar_total()
+
+    @staticmethod
+    def _obtener_atributo(item, nombre):
+        if isinstance(item, dict):
+            return item[nombre]
+        return getattr(item, nombre)
+
+    @staticmethod
+    def _asignar_atributo(item, nombre, valor):
+        if isinstance(item, dict):
+            item[nombre] = valor
+        else:
+            setattr(item, nombre, valor)
+
+    # ======================================================
+    # ❌ ELIMINAR PRODUCTO (por fila, vía ícono 🗑️)
+    # ======================================================
+    def eliminar_producto(self, row):
+        if row < 0 or row >= len(self.controlador.venta.detalle):
+            return
+
+        del self.controlador.venta.detalle[row]
+        self.controlador.venta.calcular_total()
+
+        self.actualizar_tabla()
+        self.actualizar_total()
+
+    # ======================================================
+    # 💰 ACTUALIZAR TOTAL
+    # ======================================================
+    def actualizar_total(self):
+        total = self.controlador.obtener_total()
+        self.lbl_total.setText(f"TOTAL: S/ {total:.2f}")
+        self.calcular_vuelto()
+
+    # ======================================================
+    # 💵 CALCULAR VUELTO (HU-02)
+    # ======================================================
+    def calcular_vuelto(self):
+        texto_actual = self.input_pago.lineEdit().text().strip()
+
+        if texto_actual in ("", "-"):
+            pago = 0.0
+        else:
+            pago = self.input_pago.value()
+
+        if pago <= 0:
+            self.lbl_vuelto_valor.setText("Ingrese monto recibido")
+            self._estilo_vuelto_neutro()
+            self.lbl_error_pago.setText("")
+            return
+
+        total = self.controlador.obtener_total()
+        resultado = self.controlador.calcular_vuelto(pago, total)
+
+        if resultado["error"]:
+            self.lbl_error_pago.setText(f"⚠️ {resultado['error']}")
+            self.lbl_vuelto_valor.setText(f"S/ {resultado.get('vuelto', pago - total):.2f}")
+            self._estilo_vuelto_error()
+        else:
+            self.lbl_error_pago.setText("")
+            self.lbl_vuelto_valor.setText(f"S/ {resultado['vuelto']:.2f}")
+            self._estilo_vuelto_ok()
+
+    def _estilo_vuelto_neutro(self):
+        self.lbl_vuelto_valor.setStyleSheet(f"""
+            color: {BaseLayout.COLOR_TEXTO_SECUNDARIO};
+            font-style: italic;
+        """)
+
+    def _estilo_vuelto_ok(self):
+        self.lbl_vuelto_valor.setStyleSheet(f"""
+            font-size: {self.FUENTE_TOTAL_TAMANO}px;
+            font-weight: {self.FUENTE_TOTAL_PESO};
+            color: {BaseLayout.COLOR_PRIMARIO};
+        """)
+
+    def _estilo_vuelto_error(self):
+        self.lbl_vuelto_valor.setStyleSheet(f"""
+            font-size: {self.FUENTE_TOTAL_TAMANO}px;
+            font-weight: {self.FUENTE_TOTAL_PESO};
+            color: {BaseLayout.COLOR_PELIGRO};
+        """)
+
+    # ======================================================
+    # ⚠️ ALERTAS RÁPIDAS DE STOCK BAJO
+    # ======================================================
+    def _cargar_alertas(self):
+        while self.layout_alertas.count():
+            hijo = self.layout_alertas.takeAt(0)
+            if hijo.widget():
+                hijo.widget().deleteLater()
+
+        try:
+            productos_bajo_stock = self.controlador_productos.obtener_productos_stock_bajo(
+                limite=self.UMBRAL_STOCK_BAJO
+            )
+        except Exception:
+            self.widget_alertas.setVisible(False)
+            return
+
+        if not productos_bajo_stock:
+            self.widget_alertas.setVisible(False)
+            return
+
+        self.widget_alertas.setVisible(True)
+
+        for p in productos_bajo_stock[:3]:
+            nombre = self._obtener_atributo(p, "nombre")
+            stock = self._obtener_atributo(p, "stock")
+            producto_id = self._obtener_atributo(p, "id")
+
+            btn = QPushButton(f"🔴 Stock bajo: {nombre} (stock: {stock})")
+            btn.setObjectName("btnAlerta")
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.clicked.connect(partial(self._ir_a_productos, producto_id))
+            self.layout_alertas.addWidget(btn)
+
+    def _ir_a_productos(self, producto_id=None):
+        """
+        Navega al módulo de productos, resaltando el producto por su id
+        (highlight_id en App.py). Si algo falla del lado de App.py o
+        producto_vista.py (fuera de nuestro control), se captura el error
+        para que la app no se caiga — solo se avisa por consola.
+        """
+        if not callable(self.on_navigate_to_products):
+            return
+
+        try:
+            self.on_navigate_to_products(producto_id)
+        except TypeError:
+            try:
+                self.on_navigate_to_products()
+            except Exception as e:
+                print(f"⚠️ No se pudo navegar a productos: {e}")
+        except Exception as e:
+            print(f"⚠️ No se pudo navegar a productos: {e}")
+
+    # ======================================================
+    # 🚫 CANCELAR VENTA (vacía el carrito actual)
+    # ======================================================
+    def cancelar_venta(self):
+        if not self.controlador.venta.detalle:
             return
         
         # Calcular total
@@ -522,31 +923,24 @@ class VentaVista(QWidget):
             vuelto=vuelto,
             parent=self
         )
-    
-        # El ticket se muestra como modal (bloquea la interacción hasta cerrarlo)
-        ticket_modal.exec()
-            
-        # Después de cerrar el ticket, limpiar el carrito
-        self.carrito.clear()
-        self._actualizar_carrito()
-        self._actualizar_total()
-        self.pago_input.clear()
-        self._calcular_vuelto()
-            
-        self._mostrar_mensaje_temporal("✅ Venta completada correctamente")
 
-    
-    def _cerrar_caja(self):
-        """Cierra la caja y genera reporte del día"""
-        self._mostrar_mensaje_temporal("🔒 Generando reporte de cierre de caja...")
-        # Aquí iría la lógica de cierre de caja
-    
-    def _mostrar_mensaje_temporal(self, mensaje: str, segundos: int = 2):
-        """Muestra un mensaje temporal (puedes conectar a un label de estado)"""
-        print(f"📢 {mensaje}")
-        # Opcional: conectar a un QLabel de estado si lo agregas
-    
-    def _ir_a_producto(self, producto_id: int):
-        """Navega al producto en el módulo de productos"""
-        print(f"🔍 Navegar a producto ID: {producto_id}")
-        # Aquí puedes emitir una señal o llamar a un callback
+        if respuesta == QMessageBox.Yes:
+            self.controlador = VentaControlador()
+            self.actualizar_tabla()
+            self.actualizar_total()
+            self.input_pago.setValue(0.0)
+
+    # ======================================================
+    # 💾 FINALIZAR VENTA
+    # ======================================================
+    def finalizar_venta(self):
+        ok = self.controlador.confirmar_venta()
+
+        if ok:
+            QMessageBox.information(self, "OK", "Venta registrada")
+
+            self.controlador = VentaControlador()
+            self.actualizar_tabla()
+            self.actualizar_total()
+            self.input_pago.setValue(0.0)
+            self._cargar_alertas()
